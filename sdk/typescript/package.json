@@ -1,0 +1,27 @@
+{
+  "name": "@cranial/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript & JavaScript SDK for CRANIAL Universal AI Integration Platform",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test"
+  },
+  "keywords": [
+    "cranial",
+    "ai",
+    "integration",
+    "rag",
+    "ocr",
+    "money-management"
+  ],
+  "author": "CRANIAL Platform Team",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}
+

@@ -1,0 +1,28 @@
+# Java / Maven
+backend/target/
+*.class
+*.log
+*.jar
+!backend/.mvn/wrapper/*.jar
+hs_err_pid*
+
+# Node / Admin UI
+admin-ui/node_modules/
+admin-ui/dist/
+admin-ui/.vite/
+npm-debug.log*
+
+# Environment & Secrets (NEVER commit real secrets)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# IDE & OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+

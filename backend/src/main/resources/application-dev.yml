@@ -1,0 +1,12 @@
+# Development profile defaults (strictly forbidden in prod via StartupConfigValidator)
+cranial:
+  environment: dev
+  security:
+    api-key-pepper: ${CRANIAL_API_KEY_PEPPER:dev-only-api-key-pepper-replace-in-prod-32bytes-min}
+    encryption-key: ${CRANIAL_ENCRYPTION_KEY:dev-only-aes256-master-key-replace-in-prod-32b}
+    admin-jwt-secret: ${CRANIAL_ADMIN_JWT_SECRET:dev-only-admin-jwt-hmac-secret-replace-in-prod-32b}
+  bootstrap:
+    admin-email: ${CRANIAL_BOOTSTRAP_ADMIN_EMAIL:admin@cranial.local}
+    admin-password: ${CRANIAL_BOOTSTRAP_ADMIN_PASSWORD:ChangeMe!Cranial2026}
+    admin-name: ${CRANIAL_BOOTSTRAP_ADMIN_NAME:CRANIAL Dev Operator}
+

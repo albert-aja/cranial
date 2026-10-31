@@ -1,0 +1,9 @@
+cranial:
+  environment: prod
+  cors:
+    allowed-origins: ${CRANIAL_CORS_ALLOWED_ORIGINS:}
+
+springdoc:
+  swagger-ui:
+    enabled: ${CRANIAL_SWAGGER_ENABLED:false}
+

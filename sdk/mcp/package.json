@@ -1,0 +1,20 @@
+{
+  "name": "@cranial/mcp-server",
+  "version": "0.1.0",
+  "description": "Model Context Protocol (MCP) Server for CRANIAL Universal AI Integration Platform",
+  "main": "cranial-mcp-server.js",
+  "type": "module",
+  "bin": {
+    "cranial-mcp-server": "./cranial-mcp-server.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "cranial",
+    "ai",
+    "money-management"
+  ],
+  "author": "CRANIAL Platform Team",
+  "license": "Apache-2.0"
+}
+

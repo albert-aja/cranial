@@ -1,0 +1,78 @@
+name: cranial
+
+services:
+  cranial-db:
+    image: pgvector/pgvector:pg16
+    container_name: cranial-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cranial}
+      POSTGRES_USER: ${POSTGRES_USER:-cranial}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-local-postgres-password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - cranial_pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init-extensions.sql:/docker-entrypoint-initdb.d/01-init-extensions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cranial} -d ${POSTGRES_DB:-cranial}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  cranial-redis:
+    image: redis:7-alpine
+    container_name: cranial-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - cranial_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  cranial-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cranial-backend
+    restart: unless-stopped
+    depends_on:
+      cranial-db:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      POSTGRES_HOST: cranial-db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-cranial}
+      POSTGRES_USER: ${POSTGRES_USER:-cranial}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-local-postgres-password}
+      BACKEND_PORT: 8080
+      CRANIAL_API_KEY_PEPPER: ${CRANIAL_API_KEY_PEPPER:-dev-only-api-key-pepper-replace-in-prod-32bytes-min}
+      CRANIAL_ENCRYPTION_KEY: ${CRANIAL_ENCRYPTION_KEY:-dev-only-aes256-master-key-replace-in-prod-32b}
+      CRANIAL_ADMIN_JWT_SECRET: ${CRANIAL_ADMIN_JWT_SECRET:-dev-only-admin-jwt-hmac-secret-replace-in-prod-32b}
+      CRANIAL_ADMIN_JWT_TTL_MINUTES: ${CRANIAL_ADMIN_JWT_TTL_MINUTES:-30}
+      CRANIAL_BOOTSTRAP_ADMIN_EMAIL: ${CRANIAL_BOOTSTRAP_ADMIN_EMAIL:-admin@cranial.local}
+      CRANIAL_BOOTSTRAP_ADMIN_PASSWORD: ${CRANIAL_BOOTSTRAP_ADMIN_PASSWORD:-ChangeMe!Cranial2026}
+      CRANIAL_BOOTSTRAP_ADMIN_NAME: ${CRANIAL_BOOTSTRAP_ADMIN_NAME:-CRANIAL Operator}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+
+  cranial-admin:
+    build:
+      context: ./admin-ui
+      dockerfile: Dockerfile
+    container_name: cranial-admin
+    restart: unless-stopped
+    depends_on:
+      - cranial-backend
+    ports:
+      - "${ADMIN_UI_PORT:-3000}:8080"
+
+volumes:
+  cranial_pgdata:
+  cranial_redisdata:
+

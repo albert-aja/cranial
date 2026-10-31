@@ -1,0 +1,13 @@
+package io.cranial.platform.customer.model;
+
+public enum TicketCategory {
+    MONEY_MANAGEMENT_INQUIRY,
+    BUDGET_AND_POCKETS,
+    EXPENSE_TRACKING_ISSUE,
+    ACCOUNT_AND_SECURITY,
+    FEATURE_REQUEST,
+    BUG_REPORT,
+    GENERAL_INQUIRY,
+    PROMISE_POLICY_RESTRICTION
+}
+
