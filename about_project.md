@@ -1,7 +1,5 @@
 # CRANIAL — Universal AI Integration Platform
 
-![Logo](assets/logo/logo.png)
-
 > **Tagline:** One Brain. Many Connections.
 
 > **Document purpose:** This file is the primary project-context document for an AI coding agent. It explains the product vision, architecture, capabilities, integrations, boundaries, security requirements, and recommended implementation backlog.
@@ -12,65 +10,122 @@
 
 ## Table of Contents
 
-- [Part I: Architectural Blueprint & Specifications](#part-i-architectural-blueprint--specifications)
-  - [Table of Contents](#table-of-contents)
-- [Part I: Architectural Blueprint & Specifications](#part-i-architectural-blueprint--specifications)
-  - [1. Project Identity and Vision](#1-project-identity-and-vision)
-  - [2. Architecture and Ownership Boundaries](#2-architecture-and-ownership-boundaries)
-  - [3. Deployment and Integration Decisions](#3-deployment-and-integration-decisions)
-  - [4. Local-First and Cost Policy](#4-local-first-and-cost-policy)
-  - [5. Core Platform Modules](#5-core-platform-modules)
-  - [6. Shared Intelligence Capabilities](#6-shared-intelligence-capabilities)
-  - [7. Application Integration Examples](#7-application-integration-examples)
-  - [8. API Contract](#8-api-contract)
-  - [9. Asynchronous Processing](#9-asynchronous-processing)
-  - [10. Multi-Tenancy, Authorization, and Privacy](#10-multi-tenancy-authorization-and-privacy)
-  - [11. Suggested Database Domains](#11-suggested-database-domains)
-  - [12. Admin Dashboard](#12-admin-dashboard)
-  - [13. Security and Reliability Requirements](#13-security-and-reliability-requirements)
-  - [14. Testing and Evaluation](#14-testing-and-evaluation)
-  - [15. Development Strategy and Phases](#15-development-strategy-and-phases)
-  - [16. Initial Integration Priorities](#16-initial-integration-priorities)
-  - [17. Suggested Backend Structure](#17-suggested-backend-structure)
-  - [18. Coding Agent Rules](#18-coding-agent-rules)
-  - [19. Definition of Done](#19-definition-of-done)
-- [Part II: Implemented Features](#part-ii-implemented-features)
-  - [Phase 1 — Platform Foundation (Completed)](#phase-1--platform-foundation-completed)
-  - [Phase 2 — Provider Infrastructure, Model Registry, Routing & Telemetry (Completed)](#phase-2--provider-infrastructure-model-registry-routing--telemetry-completed)
-  - [Phase 3 — Orchestration and Prompt/Schema Management (Completed)](#phase-3--orchestration-and-promptschema-management-completed)
+- [Part I: Architectural Blueprint & Specifications
+](#part-i-architectural-blueprint--specifications)
+  - [Table of Contents
+](#table-of-contents)
+- [Part I: Architectural Blueprint & Specifications
+](#part-i-architectural-blueprint--specifications)
+  - [1. Project Identity and Vision
+](#1-project-identity-and-vision)
+  - [2. Architecture and Ownership Boundaries
+](#2-architecture-and-ownership-boundaries)
+  - [3. Deployment and Integration Decisions
+](#3-deployment-and-integration-decisions)
+  - [4. Local-First and Cost Policy
+](#4-local-first-and-cost-policy)
+  - [5. Core Platform Modules
+](#5-core-platform-modules)
+  - [6. Shared Intelligence Capabilities
+](#6-shared-intelligence-capabilities)
+  - [7. Application Integration Examples
+](#7-application-integration-examples)
+  - [8. API Contract
+](#8-api-contract)
+  - [9. Asynchronous Processing
+](#9-asynchronous-processing)
+  - [10. Multi-Tenancy, Authorization, and Privacy
+](#10-multi-tenancy-authorization-and-privacy)
+  - [11. Suggested Database Domains
+](#11-suggested-database-domains)
+  - [12. Admin Dashboard
+](#12-admin-dashboard)
+  - [13. Security and Reliability Requirements
+](#13-security-and-reliability-requirements)
+  - [14. Testing and Evaluation
+](#14-testing-and-evaluation)
+  - [15. Development Strategy and Phases
+](#15-development-strategy-and-phases)
+  - [16. Initial Integration Priorities
+](#16-initial-integration-priorities)
+  - [17. Suggested Backend Structure
+](#17-suggested-backend-structure)
+  - [18. Coding Agent Rules
+](#18-coding-agent-rules)
+  - [19. Definition of Done
+](#19-definition-of-done)
+- [Part II: Implemented Features
+](#part-ii-implemented-features)
+  - [Phase 1 — Platform Foundation (Completed)
+](#phase-1--platform-foundation-completed)
+  - [Phase 2 — Provider Infrastructure, Model Registry, Routing & Telemetry (Completed)
+](#phase-2--provider-infrastructure-model-registry-routing--telemetry-completed)
+  - [Phase 3 — Orchestration and Prompt/Schema Management (Completed)
+](#phase-3--orchestration-and-promptschema-management-completed)
   - [Phase 4 & Section 20.8 — Conversational Intelligence (Completed)](#phase-4--section-208--conversational-intelligence-completed)
-  - [Section 20.2 Model and Provider Management Improvements (Completed)](#section-202-model-and-provider-management-improvements-completed)
-  - [Dual Language Support — English & Bahasa Indonesia (Completed)](#dual-language-support--english--bahasa-indonesia-completed)
-  - [Phase 5 & Section 20.4 — Document Intelligence and OCR (Completed)](#phase-5--section-204--document-intelligence-and-ocr-completed)
-  - [Phase 6 & Section 20.5 — Knowledge Intelligence and RAG (Completed)](#phase-6--section-205--knowledge-intelligence-and-rag-completed)
-  - [Phase 7 & Section 20.6 — Data Intelligence and Analytics (Completed)](#phase-7--section-206--data-intelligence-and-analytics-completed)
-  - [Phase 8 & Section 20.7 — Decision Intelligence and Optimization (Completed)](#phase-8--section-207--decision-intelligence-and-optimization-completed)
-  - [Phase 9 & Section 20.9 — Customer Intelligence (Completed)](#phase-9--section-209--customer-intelligence-completed)
-  - [Phase 10 — Application Integrations, Client SDKs & MCP Readiness (Completed)](#phase-10--application-integrations-client-sdks--mcp-readiness-completed)
-  - [Phase 8 & Section 20.7 — Decision Intelligence and Optimization (Completed)](#phase-8--section-207--decision-intelligence-and-optimization-completed)
-  - [Phase 9 & Section 20.9 — Customer Intelligence (Completed)](#phase-9--section-209--customer-intelligence-completed)
-  - [Phase 10 — Application Integrations, Client SDKs & MCP Readiness (Completed)](#phase-10--application-integrations-client-sdks--mcp-readiness-completed)
-  - [Section 20.12 — Admin Dashboard UI/UX & Operator Experience (Completed)](#section-2012--admin-dashboard-uiux--operator-experience-completed)
-- [Part III: Product Backlog & Improvements (Section 20)](#part-iii-product-backlog--improvements-section-20)
-  - [20.1 Foundation and architecture](#201-foundation-and-architecture)
-  - [20.2 Model and provider management](#202-model-and-provider-management)
-  - [20.3 Orchestration and workflow improvements](#203-orchestration-and-workflow-improvements)
-  - [20.4 Document intelligence and OCR](#204-document-intelligence-and-ocr)
-  - [20.5 Knowledge intelligence and RAG](#205-knowledge-intelligence-and-rag)
-  - [20.6 Data intelligence and analytics](#206-data-intelligence-and-analytics)
-  - [20.7 Decision intelligence and optimization](#207-decision-intelligence-and-optimization)
+  - [Section 20.2 Model and Provider Management Improvements (Completed)
+](#section-202-model-and-provider-management-improvements-completed)
+  - [Dual Language Support — English & Bahasa Indonesia (Completed)
+](#dual-language-support--english--bahasa-indonesia-completed)
+  - [Phase 5 & Section 20.4 — Document Intelligence and OCR (Completed)
+](#phase-5--section-204--document-intelligence-and-ocr-completed)
+  - [Phase 6 & Section 20.5 — Knowledge Intelligence and RAG (Completed)
+](#phase-6--section-205--knowledge-intelligence-and-rag-completed)
+  - [Phase 7 & Section 20.6 — Data Intelligence and Analytics (Completed)
+](#phase-7--section-206--data-intelligence-and-analytics-completed)
+  - [Phase 8 & Section 20.7 — Decision Intelligence and Optimization (Completed)
+](#phase-8--section-207--decision-intelligence-and-optimization-completed)
+  - [Phase 9 & Section 20.9 — Customer Intelligence (Completed)
+](#phase-9--section-209--customer-intelligence-completed)
+  - [Phase 10 — Application Integrations, Client SDKs & MCP Readiness (Completed)
+](#phase-10--application-integrations-client-sdks--mcp-readiness-completed)
+  - [Phase 8 & Section 20.7 — Decision Intelligence and Optimization (Completed)
+](#phase-8--section-207--decision-intelligence-and-optimization-completed)
+  - [Phase 9 & Section 20.9 — Customer Intelligence (Completed)
+](#phase-9--section-209--customer-intelligence-completed)
+  - [Phase 10 — Application Integrations, Client SDKs & MCP Readiness (Completed)
+](#phase-10--application-integrations-client-sdks--mcp-readiness-completed)
+  - [Section 20.12 — Admin Dashboard UI/UX & Operator Experience (Completed)
+](#section-2012--admin-dashboard-uiux--operator-experience-completed)
+- [Part III: Product Backlog & Improvements (Section 20)
+](#part-iii-product-backlog--improvements-section-20)
+  - [20.1 Foundation and architecture
+](#201-foundation-and-architecture)
+  - [20.2 Model and provider management
+](#202-model-and-provider-management)
+  - [20.3 Orchestration and workflow improvements
+](#203-orchestration-and-workflow-improvements)
+  - [20.4 Document intelligence and OCR
+](#204-document-intelligence-and-ocr)
+  - [20.5 Knowledge intelligence and RAG
+](#205-knowledge-intelligence-and-rag)
+  - [20.6 Data intelligence and analytics
+](#206-data-intelligence-and-analytics)
+  - [20.7 Decision intelligence and optimization
+](#207-decision-intelligence-and-optimization)
   - [20.8 Conversational intelligence](#208-conversational-intelligence)
-  - [20.9 Customer intelligence](#209-customer-intelligence)
-  - [20.10 Security, privacy, and governance](#2010-security-privacy-and-governance)
-  - [20.11 Performance, scalability, and reliability](#2011-performance-scalability-and-reliability)
-  - [20.12 Admin dashboard UI/UX](#2012-admin-dashboard-uiux)
-  - [20.13 Developer experience and integrations](#2013-developer-experience-and-integrations)
-  - [20.14 Operations and observability](#2014-operations-and-observability)
-  - [20.15 Testing and quality improvements](#2015-testing-and-quality-improvements)
-  - [20.16 Future major feature candidates](#2016-future-major-feature-candidates)
-- [Part IV: Governance, Prioritization & Principles](#part-iv-governance-prioritization--principles)
-  - [21. Backlog Prioritization Guidance](#21-backlog-prioritization-guidance)
-  - [22. Final Architectural Principles](#22-final-architectural-principles)
+  - [20.9 Customer intelligence
+](#209-customer-intelligence)
+  - [20.10 Security, privacy, and governance
+](#2010-security-privacy-and-governance)
+  - [20.11 Performance, scalability, and reliability
+](#2011-performance-scalability-and-reliability)
+  - [20.12 Admin dashboard UI/UX
+](#2012-admin-dashboard-uiux)
+  - [20.13 Developer experience and integrations
+](#2013-developer-experience-and-integrations)
+  - [20.14 Operations and observability
+](#2014-operations-and-observability)
+  - [20.15 Testing and quality improvements
+](#2015-testing-and-quality-improvements)
+  - [20.16 Future major feature candidates
+](#2016-future-major-feature-candidates)
+- [Part IV: Governance, Prioritization & Principles
+](#part-iv-governance-prioritization--principles)
+  - [21. Backlog Prioritization Guidance
+](#21-backlog-prioritization-guidance)
+  - [22. Final Architectural Principles
+](#22-final-architectural-principles)
 
 ---
 

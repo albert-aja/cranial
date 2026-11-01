@@ -1,5 +1,7 @@
 # CRANIAL — Universal AI Integration Platform
 
+![Logo](assets/logo/logo.png)
+
 > **Tagline:** One Brain. Many Connections.
 
 CRANIAL is a standalone, model-independent, local-first **Universal AI Integration Platform**. It centralizes reusable AI orchestration, OCR/document processing, permission-aware retrieval (RAG), data explanations, and decision-support workflows for multiple client applications (**Peggy**, **SMS**, **Worker App**, **E-commerce**, and future applications) without taking ownership of their primary databases, deterministic domain calculations, or business validation.
