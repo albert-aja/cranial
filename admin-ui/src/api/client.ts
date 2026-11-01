@@ -1001,15 +1001,40 @@ export const adminApi = {
       method: 'POST',
     }),
 
-  // Phase 9 Customer Intelligence
+  // Phase 9 Customer Intelligence & Indonesian Support Chat Slang Normalization
+  normalizeCustomerSlang: (payload: import('./types').CustomerSlangNormalizeRequestPayload) =>
+    request<import('./types').CustomerSlangNormalizeResultView>('/api/admin/v1/customer/slang/normalize', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  listCustomerSlangLexicon: (params?: { category?: string; search?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.category && params.category !== 'ALL') qs.set('category', params.category);
+    if (params?.search) qs.set('search', params.search);
+    const queryString = qs.toString() ? `?${qs.toString()}` : '';
+    return request<import('./types').CustomerSlangLexiconItemView[]>(`/api/admin/v1/customer/slang/lexicon${queryString}`);
+  },
+
+  saveCustomerSlangLexicon: (payload: import('./types').CustomerSlangLexiconRequestPayload) =>
+    request<import('./types').CustomerSlangLexiconItemView>('/api/admin/v1/customer/slang/lexicon', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  deleteCustomerSlangLexicon: (id: string) =>
+    request<{ id: string; deleted: boolean }>(`/api/admin/v1/customer/slang/lexicon/${id}`, {
+      method: 'DELETE',
+    }),
+
   analyzeCustomerSentiment: (payload: import('./types').SentimentAnalysisRequestPayload) =>
-    request<import('./types').SentimentAnalysisResultView>('/api/v1/customer/sentiment/analyze', {
+    request<import('./types').SentimentAnalysisResultView>('/api/admin/v1/customer/sentiment/analyze', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
 
   triageCustomerTicket: (payload: import('./types').TicketTriageRequestPayload) =>
-    request<import('./types').TicketTriageResultView>('/api/v1/customer/tickets/triage', {
+    request<import('./types').TicketTriageResultView>('/api/admin/v1/customer/tickets/triage', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
@@ -1042,13 +1067,13 @@ export const adminApi = {
     }),
 
   summarizeCustomerReviews: (payload: import('./types').ReviewSummarizeRequestPayload) =>
-    request<import('./types').ReviewSummaryResultView>('/api/v1/customer/reviews/summarize', {
+    request<import('./types').ReviewSummaryResultView>('/api/admin/v1/customer/reviews/summarize', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
 
   discoverCustomerProducts: (payload: import('./types').ProductDiscoveryRequestPayload) =>
-    request<import('./types').ProductDiscoveryResultView>('/api/v1/customer/products/discover', {
+    request<import('./types').ProductDiscoveryResultView>('/api/admin/v1/customer/products/discover', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
@@ -1087,62 +1112,78 @@ export const adminApi = {
       body: JSON.stringify(body || { test: 'handshake' }),
     }),
 
-  // Phase 9 Customer Intelligence
-  analyzeCustomerSentiment: (payload: import('./types').SentimentAnalysisRequestPayload) =>
-    request<import('./types').SentimentAnalysisResultView>('/api/v1/customer/sentiment/analyze', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
-
-  triageCustomerTicket: (payload: import('./types').TicketTriageRequestPayload) =>
-    request<import('./types').TicketTriageResultView>('/api/v1/customer/tickets/triage', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    }),
-
-  listCustomerTickets: (params?: { status?: string; priority?: string; category?: string; application_id?: string }) => {
+  // Conversational Intelligence
+  listConversations: (params?: { applicationId?: string; tenantId?: string; query?: string; status?: string; page?: number; size?: number }) => {
     const qs = new URLSearchParams();
-    if (params?.status && params.status !== 'ALL') qs.set('status', params.status);
-    if (params?.priority && params.priority !== 'ALL') qs.set('priority', params.priority);
-    if (params?.category && params.category !== 'ALL') qs.set('category', params.category);
-    if (params?.application_id) qs.set('application_id', params.application_id);
-    const queryString = qs.toString() ? `?${qs.toString()}` : '';
-    return request<import('./types').CustomerTicketItemView[]>(`/api/admin/v1/customer/tickets${queryString}`);
+    if (params?.applicationId) qs.set("applicationId", params.applicationId);
+    if (params?.tenantId) qs.set("tenantId", params.tenantId);
+    if (params?.query) qs.set("query", params.query);
+    if (params?.status) qs.set("status", params.status);
+    if (params?.page !== undefined) qs.set("page", params.page.toString());
+    if (params?.size !== undefined) qs.set("size", params.size.toString());
+    const queryString = qs.toString() ? `?${qs.toString()}` : "";
+    return request<import("./types").ConversationView[]>(`/api/admin/v1/conversations${queryString}`);
   },
 
-  getCustomerTicket: (id: string) =>
-    request<import('./types').CustomerTicketItemView>(`/api/admin/v1/customer/tickets/${id}`),
+  getConversation: (conversationId: string) =>
+    request<import("./types").ConversationDetailView>(`/api/admin/v1/conversations/${conversationId}`),
 
-  listCustomerEscalations: (params?: { status?: string; application_id?: string }) => {
-    const qs = new URLSearchParams();
-    if (params?.status && params.status !== 'ALL') qs.set('status', params.status);
-    if (params?.application_id) qs.set('application_id', params.application_id);
-    const queryString = qs.toString() ? `?${qs.toString()}` : '';
-    return request<import('./types').CustomerEscalationItemView[]>(`/api/admin/v1/customer/escalations${queryString}`);
+  createConversationSession: (applicationId: string, tenantId: string | undefined, payload: { userId: string; title?: string; locale?: string; initialMessage?: string; metadata?: Record<string, unknown> }) => {
+    const qs = new URLSearchParams({ applicationId });
+    if (tenantId) qs.set("tenantId", tenantId);
+    return request<import("./types").ConversationDetailView>(`/api/admin/v1/conversations/create-session?${qs.toString()}`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
   },
 
-  resolveCustomerEscalation: (id: string, resolutionNotes?: string) =>
-    request<import('./types').CustomerEscalationItemView>(`/api/admin/v1/customer/escalations/${id}/resolve`, {
-      method: 'POST',
-      body: JSON.stringify({ resolution_notes: resolutionNotes || 'Resolved by operator' }),
+  simulateConversationTurn: (applicationId: string, conversationId: string, payload: { content: string; locale?: string }) => {
+    const qs = new URLSearchParams({ applicationId, conversationId });
+    return request<any>(`/api/admin/v1/conversations/simulate?${qs.toString()}`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  exportConversation: (conversationId: string, format = "markdown") =>
+    request<{ conversationId: string; title: string; format: string; content: string; exportedAt: string }>(`/api/admin/v1/conversations/${conversationId}/export?format=${format}`),
+
+  deleteConversation: (conversationId: string, hardDelete = false) =>
+    request<void>(`/api/admin/v1/conversations/${conversationId}?hardDelete=${hardDelete}`, {
+      method: "DELETE",
     }),
 
-  summarizeCustomerReviews: (payload: import('./types').ReviewSummarizeRequestPayload) =>
-    request<import('./types').ReviewSummaryResultView>('/api/v1/customer/reviews/summarize', {
-      method: 'POST',
+  submitConversationFeedback: (conversationId: string, payload: { messageId?: string; rating?: number; isHelpful?: boolean; isCorrect?: boolean; feedbackCategory?: string; comment?: string }) =>
+    request<import("./types").ConversationFeedbackView>(`/api/admin/v1/conversations/${conversationId}/feedback`, {
+      method: "POST",
       body: JSON.stringify(payload),
     }),
 
-  discoverCustomerProducts: (payload: import('./types').ProductDiscoveryRequestPayload) =>
-    request<import('./types').ProductDiscoveryResultView>('/api/v1/customer/products/discover', {
-      method: 'POST',
+  testSlangNormalization: (payload: { text: string; locale?: string }) =>
+    request<import("./types").SlangNormalizeResultView>("/api/admin/v1/conversations/normalize-slang", {
+      method: "POST",
       body: JSON.stringify(payload),
     }),
 
-  runCustomerBenchmarks: () =>
-    request<import('./types').CustomerBenchmarkResultView>('/api/admin/v1/customer/benchmarks/run', {
-      method: 'POST',
+  getConversationRetentionPolicies: () =>
+    request<import("./types").ConversationRetentionPolicyView[]>("/api/admin/v1/conversations/retention"),
+
+  getConversationRetentionPolicy: (applicationId: string) =>
+    request<import("./types").ConversationRetentionPolicyView>(`/api/admin/v1/conversations/retention/${applicationId}`),
+
+  updateConversationRetentionPolicy: (applicationId: string, payload: Partial<import("./types").ConversationRetentionPolicyView>) =>
+    request<import("./types").ConversationRetentionPolicyView>(`/api/admin/v1/conversations/retention/${applicationId}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
     }),
+
+  pruneConversations: () =>
+    request<{ prunedCount: number; status: string }>("/api/admin/v1/conversations/prune", {
+      method: "POST",
+    }),
+
+  getConversationBenchmarks: () =>
+    request<import("./types").ConversationBenchmarkResultView>("/api/admin/v1/conversations/benchmarks"),
 };
 
 export const api = adminApi;

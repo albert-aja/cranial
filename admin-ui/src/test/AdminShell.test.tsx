@@ -2,6 +2,10 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import { RevealOnceModal } from '../components/RevealOnceModal';
+import { GlobalSearchModal } from '../components/GlobalSearchModal';
+import { KeyboardShortcutsModal } from '../components/KeyboardShortcutsModal';
+import { SignedContextSnippetGenerator } from '../components/SignedContextSnippetGenerator';
+import { ErrorExplanationBanner } from '../components/ErrorExplanationBanner';
 
 describe('CRANIAL Admin UI Shell', () => {
   it('renders CRANIAL login console when unauthenticated', async () => {
@@ -307,6 +311,152 @@ describe('CRANIAL Admin UI Shell', () => {
       fetchMock.mockRestore();
       sessionStorage.clear();
     }
+  });
+
+  it('renders Conversations & Assistant console and switches between English and Indonesian', async () => {
+    sessionStorage.setItem('cranial_admin_jwt', 'mock-jwt-token');
+    localStorage.clear();
+
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.endsWith('/auth/me')) {
+        return new Response(
+          JSON.stringify({
+            status: 'ok',
+            data: {
+              id: '00000000-0000-0000-0000-000000000001',
+              email: 'admin@cranial.test',
+              display_name: 'Operator',
+              roles: ['SUPER_ADMIN'],
+              permissions: ['app:read', 'app:write', 'capability:manage'],
+            },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+      return new Response(JSON.stringify({ status: 'ok', data: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+
+    try {
+      render(<App />);
+      const convNav = await screen.findByRole('button', { name: 'Conversations & Assistant' });
+      fireEvent.click(convNav);
+
+      expect(await screen.findByRole('heading', { name: /Conversational Intelligence/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Sessions Explorer' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Interactive Assistant & Simulator' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Indonesian Slang Normalizer' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Non-Banking Safety Guard' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Retention & Governance' })).toBeInTheDocument();
+
+      // Switch to Indonesian
+      fireEvent.click(screen.getByRole('button', { name: 'ID' }));
+      expect(await screen.findByRole('heading', { name: /Intelijen Percakapan/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Penjelajah Sesi' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Normalisasi Slang Indonesia' })).toBeInTheDocument();
+    } finally {
+      fetchMock.mockRestore();
+      sessionStorage.clear();
+    }
+  });
+
+  it('renders and filters Global Search Command Palette (Ctrl+K)', () => {
+    const onSelectTab = vi.fn();
+    const onClose = vi.fn();
+
+    render(<GlobalSearchModal isOpen={true} onClose={onClose} onSelectTab={onSelectTab} />);
+
+    expect(screen.getByPlaceholderText(/Search commands, applications, models/i)).toBeInTheDocument();
+    expect(screen.getByText('Platform Overview')).toBeInTheDocument();
+
+    // Type query
+    const searchInput = screen.getByPlaceholderText(/Search commands, applications, models/i);
+    fireEvent.change(searchInput, { target: { value: 'peggy' } });
+
+    expect(screen.getByText('Peggy Financial Assistant')).toBeInTheDocument();
+
+    // Click on Peggy result item
+    fireEvent.click(screen.getByText('Peggy Financial Assistant'));
+    expect(onSelectTab).toHaveBeenCalledWith('applications');
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('renders Keyboard Shortcuts cheatsheet and closes cleanly', () => {
+    const onClose = vi.fn();
+    render(<KeyboardShortcutsModal isOpen={true} onClose={onClose} />);
+
+    expect(screen.getByText('Keyboard Shortcuts & Navigation')).toBeInTheDocument();
+    expect(screen.getByText('Cmd / Ctrl + K')).toBeInTheDocument();
+    expect(screen.getByText('Pure Money Mgmt')).toBeInTheDocument();
+
+    // Click Got it button
+    fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders SignedContextSnippetGenerator and switches code snippets', () => {
+    const mockApp = {
+      id: 'app-001',
+      code: 'peggy',
+      name: 'Peggy Budgeting',
+      environment: 'PROD' as const,
+      status: 'ACTIVE' as const,
+      rate_limit_rpm: 120,
+      created_at: new Date().toISOString(),
+    };
+    const mockCreds = [
+      {
+        id: 'cred-001',
+        application_id: 'app-001',
+        name: 'Primary Key',
+        environment: 'PROD' as const,
+        key_prefix: 'crn_prod_123',
+        status: 'ACTIVE' as const,
+        created_at: new Date().toISOString(),
+      },
+    ];
+
+    const { container } = render(<SignedContextSnippetGenerator app={mockApp} credentials={mockCreds} />);
+
+    expect(screen.getByText('Signed-Context Test Snippet Generator')).toBeInTheDocument();
+
+    // Default cURL
+    expect(container.querySelector('pre')?.textContent).toContain('curl -X POST');
+    expect(container.querySelector('pre')?.textContent).toContain('X-CRANIAL-APP-CODE: peggy');
+
+    // Switch to Java 21
+    fireEvent.click(screen.getByRole('button', { name: 'Java 21' }));
+    expect(container.querySelector('pre')?.textContent).toContain('HmacSHA256');
+
+    // Switch to TypeScript
+    fireEvent.click(screen.getByRole('button', { name: 'TypeScript' }));
+    expect(container.querySelector('pre')?.textContent).toContain('createHmac');
+    expect(container.querySelector('pre')?.textContent).toContain('sendCranialSignedRequest');
+  });
+
+  it('renders ErrorExplanationBanner with operator guidance and correlation ID', () => {
+    const onRetry = vi.fn();
+    render(
+      <ErrorExplanationBanner
+        errorCode="TOOL_PERMISSION_DENIED"
+        errorMessage="Worker is not entitled to execute order cancellation"
+        correlationId="req-correl-998877"
+        onRetry={onRetry}
+      />
+    );
+
+    expect(screen.getByText('TOOL_PERMISSION_DENIED')).toBeInTheDocument();
+    expect(screen.getByText(/lack the tool authority/i)).toBeInTheDocument();
+    expect(screen.getByText(/Verify application capability entitlements/i)).toBeInTheDocument();
+    expect(screen.getByText(/req-correl-998877/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy ID' })).toBeInTheDocument();
+
+    // Click Retry
+    fireEvent.click(screen.getByRole('button', { name: 'Retry Action' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });
 

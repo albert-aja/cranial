@@ -8,12 +8,15 @@ import io.cranial.platform.audit.AuditService;
 import io.cranial.platform.customer.engine.CustomerPrivacyGuard;
 import io.cranial.platform.customer.engine.CustomerPromiseGuard;
 import io.cranial.platform.customer.engine.CustomerSentimentEngine;
+import io.cranial.platform.customer.engine.CustomerSlangNormalizer;
 import io.cranial.platform.customer.engine.CustomerTriageEngine;
 import io.cranial.platform.customer.entity.CustomerEscalationEntity;
 import io.cranial.platform.customer.entity.CustomerEvalCaseEntity;
+import io.cranial.platform.customer.entity.CustomerSlangLexiconEntity;
 import io.cranial.platform.customer.entity.CustomerTicketEntity;
 import io.cranial.platform.customer.mapper.CustomerEscalationMapper;
 import io.cranial.platform.customer.mapper.CustomerEvalCaseMapper;
+import io.cranial.platform.customer.mapper.CustomerSlangLexiconMapper;
 import io.cranial.platform.customer.mapper.CustomerTicketMapper;
 import io.cranial.platform.customer.model.*;
 import io.cranial.platform.platform.exception.CranialException;
@@ -28,11 +31,25 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 public class CustomerIntelligenceService {
 
+    private static final Set<String> ALLOWED_SLANG_CATEGORIES = Set.of(
+            "ACTION_COLLOQUIALISM",
+            "BANKING_REFUND_SLANG",
+            "PERFORMANCE_SLANG",
+            "AUTH_ACCESS_SLANG",
+            "CHAT_ABBREVIATION",
+            "NEGATION_SHORTHAND",
+            "FINANCIAL_SLANG",
+            "ESCALATION_SLANG",
+            "OCR_SUPPORT_SLANG"
+    );
+
     private final CustomerTicketMapper ticketMapper;
     private final CustomerEscalationMapper escalationMapper;
     private final CustomerEvalCaseMapper evalCaseMapper;
+    private final CustomerSlangLexiconMapper slangLexiconMapper;
     private final CustomerPrivacyGuard privacyGuard;
     private final CustomerPromiseGuard promiseGuard;
+    private final CustomerSlangNormalizer slangNormalizer;
     private final CustomerSentimentEngine sentimentEngine;
     private final CustomerTriageEngine triageEngine;
     private final AuditService auditService;
@@ -44,8 +61,10 @@ public class CustomerIntelligenceService {
             CustomerTicketMapper ticketMapper,
             CustomerEscalationMapper escalationMapper,
             CustomerEvalCaseMapper evalCaseMapper,
+            CustomerSlangLexiconMapper slangLexiconMapper,
             CustomerPrivacyGuard privacyGuard,
             CustomerPromiseGuard promiseGuard,
+            CustomerSlangNormalizer slangNormalizer,
             CustomerSentimentEngine sentimentEngine,
             CustomerTriageEngine triageEngine,
             AuditService auditService,
@@ -54,12 +73,143 @@ public class CustomerIntelligenceService {
         this.ticketMapper = ticketMapper;
         this.escalationMapper = escalationMapper;
         this.evalCaseMapper = evalCaseMapper;
+        this.slangLexiconMapper = slangLexiconMapper;
         this.privacyGuard = privacyGuard;
         this.promiseGuard = promiseGuard;
+        this.slangNormalizer = slangNormalizer;
         this.sentimentEngine = sentimentEngine;
         this.triageEngine = triageEngine;
         this.auditService = auditService;
         this.objectMapper = objectMapper;
+    }
+
+    public CustomerSlangNormalizeResult normalizeSupportChat(CustomerSlangNormalizeRequest request) {
+        String effectiveLocale = (request.locale() != null && !request.locale().isBlank()) ? request.locale() : "id";
+        boolean shouldRedact = request.redactPii() == null || Boolean.TRUE.equals(request.redactPii());
+
+        var redaction = shouldRedact
+                ? privacyGuard.sanitize(request.text())
+                : new CustomerPrivacyGuard.RedactionResult(request.text(), false, List.of());
+
+        var norm = slangNormalizer.normalize(redaction.redactedText(), effectiveLocale);
+        var promiseEval = promiseGuard.evaluate(norm.normalizedText(), effectiveLocale);
+        boolean bankingBoundaryDetected = norm.bankingBoundaryHintDetected() || promiseEval.flagged();
+
+        return new CustomerSlangNormalizeResult(
+                request.text(),
+                redaction.redactedText(),
+                norm.normalizedText(),
+                effectiveLocale,
+                redaction.piiDetected(),
+                redaction.piiEntities(),
+                norm.slangDetected(),
+                norm.elongationCollapsedCount(),
+                norm.replacements().size(),
+                norm.replacements(),
+                bankingBoundaryDetected,
+                bankingBoundaryDetected ? promiseGuard.getDisclaimer(effectiveLocale) : null
+        );
+    }
+
+    public List<CustomerSlangLexiconView> listSlangLexicon(String category, String search) {
+        return slangNormalizer.listBuiltInAndCustomLexicon(category, search);
+    }
+
+    @Transactional
+    public CustomerSlangLexiconView saveSlangLexiconEntry(CustomerSlangLexiconRequest request, String actorEmail) {
+        String normalizedTerm = request.slangTerm().trim().toLowerCase(Locale.ROOT);
+        String canonical = request.canonicalForm().trim();
+        String category = (request.category() != null && ALLOWED_SLANG_CATEGORIES.contains(request.category().toUpperCase(Locale.ROOT)))
+                ? request.category().toUpperCase(Locale.ROOT)
+                : "ACTION_COLLOQUIALISM";
+        String locale = (request.locale() != null && !request.locale().isBlank()) ? request.locale().trim() : "id";
+        boolean bankingHint = Boolean.TRUE.equals(request.bankingBoundaryHint());
+        boolean active = request.isActive() == null || Boolean.TRUE.equals(request.isActive());
+
+        CustomerSlangLexiconEntity existing = slangLexiconMapper.selectOne(
+                new LambdaQueryWrapper<CustomerSlangLexiconEntity>()
+                        .eq(CustomerSlangLexiconEntity::getSlangTerm, normalizedTerm)
+        );
+
+        Instant now = Instant.now();
+        CustomerSlangLexiconEntity entity;
+        if (existing != null) {
+            entity = existing;
+            entity.setCanonicalForm(canonical);
+            entity.setCategory(category);
+            entity.setLocale(locale);
+            entity.setIsBankingBoundaryHint(bankingHint);
+            entity.setExplanation(request.explanation());
+            entity.setIsActive(active);
+            entity.setUpdatedAt(now);
+            slangLexiconMapper.updateById(entity);
+        } else {
+            entity = new CustomerSlangLexiconEntity();
+            entity.setId(UUID.randomUUID());
+            entity.setSlangTerm(normalizedTerm);
+            entity.setCanonicalForm(canonical);
+            entity.setCategory(category);
+            entity.setLocale(locale);
+            entity.setIsBankingBoundaryHint(bankingHint);
+            entity.setExplanation(request.explanation());
+            entity.setIsActive(active);
+            entity.setCreatedAt(now);
+            entity.setUpdatedAt(now);
+            slangLexiconMapper.insert(entity);
+        }
+
+        auditService.record(new AuditEvent(
+                "PLATFORM_USER",
+                actorEmail != null ? actorEmail : "operator",
+                null,
+                null,
+                "CUSTOMER_SLANG_LEXICON_SAVED",
+                "ai_customer_slang_lexicon",
+                entity.getId().toString(),
+                "SUCCESS",
+                Map.of(
+                        "slang_term", normalizedTerm,
+                        "canonical_form", canonical,
+                        "category", category,
+                        "banking_boundary_hint", bankingHint
+                ),
+                null
+        ));
+
+        return new CustomerSlangLexiconView(
+                entity.getId(),
+                entity.getSlangTerm(),
+                entity.getCanonicalForm(),
+                entity.getCategory(),
+                entity.getLocale(),
+                Boolean.TRUE.equals(entity.getIsBankingBoundaryHint()),
+                entity.getExplanation(),
+                "CUSTOM_DB",
+                Boolean.TRUE.equals(entity.getIsActive()),
+                entity.getUpdatedAt()
+        );
+    }
+
+    @Transactional
+    public void deleteSlangLexiconEntry(UUID id, String actorEmail) {
+        CustomerSlangLexiconEntity existing = slangLexiconMapper.selectById(id);
+        if (existing == null) {
+            throw new CranialException(ErrorCode.RESOURCE_NOT_FOUND, "Custom slang lexicon entry not found: " + id);
+        }
+        slangLexiconMapper.deleteById(id);
+
+        auditService.record(new AuditEvent(
+                "PLATFORM_USER",
+                actorEmail != null ? actorEmail : "operator",
+                null,
+                null,
+                "CUSTOMER_SLANG_LEXICON_DELETED",
+                "ai_customer_slang_lexicon",
+                id.toString(),
+                "SUCCESS",
+                Map.of("slang_term", existing.getSlangTerm()),
+                null
+        ));
     }
 
     public SentimentAnalysisResult analyzeSentiment(
@@ -69,12 +219,18 @@ public class CustomerIntelligenceService {
             boolean isAdmin
     ) {
         boolean shouldRedact = request.redactPii() == null || Boolean.TRUE.equals(request.redactPii());
-        var redaction = shouldRedact ? privacyGuard.sanitize(request.text()) : new CustomerPrivacyGuard.RedactionResult(request.text(), false, List.of());
-        var sentimentOutput = sentimentEngine.analyze(redaction.redactedText());
+        var redaction = shouldRedact
+                ? privacyGuard.sanitize(request.text())
+                : new CustomerPrivacyGuard.RedactionResult(request.text(), false, List.of());
+        var norm = slangNormalizer.normalize(redaction.redactedText(), request.locale());
+        var sentimentOutput = sentimentEngine.analyze(norm.normalizedText());
 
         return new SentimentAnalysisResult(
                 request.text(),
                 redaction.redactedText(),
+                norm.normalizedText(),
+                norm.slangDetected(),
+                norm.replacements(),
                 sentimentOutput.sentiment(),
                 sentimentOutput.score(),
                 sentimentOutput.confidence(),
@@ -93,11 +249,13 @@ public class CustomerIntelligenceService {
             boolean isAdmin,
             String applicationCode
     ) {
+        String effectiveLocale = request.locale() != null ? request.locale() : "en";
         var redaction = privacyGuard.sanitize(request.message());
-        var sentimentOutput = sentimentEngine.analyze(redaction.redactedText());
+        var norm = slangNormalizer.normalize(redaction.redactedText(), effectiveLocale);
+        var sentimentOutput = sentimentEngine.analyze(norm.normalizedText());
         var triageDecision = triageEngine.triage(
-                redaction.redactedText(),
-                request.locale(),
+                norm.normalizedText(),
+                effectiveLocale,
                 sentimentOutput.sentiment(),
                 sentimentOutput.score(),
                 sentimentOutput.urgency()
@@ -116,9 +274,12 @@ public class CustomerIntelligenceService {
         ticket.setSubject(request.subject());
         ticket.setRawMessage(request.message());
         ticket.setRedactedMessage(redaction.redactedText());
+        ticket.setNormalizedMessage(norm.normalizedText());
+        ticket.setSlangNormalized(norm.slangDetected());
+        ticket.setSlangReplacementsJson(writeJson(norm.replacements()));
         ticket.setPiiDetected(redaction.piiDetected());
         ticket.setPiiEntitiesJson(writeJson(redaction.piiEntities()));
-        ticket.setLocale(request.locale() != null ? request.locale() : "en");
+        ticket.setLocale(effectiveLocale);
         ticket.setCategory(triageDecision.category().name());
         ticket.setSentiment(sentimentOutput.sentiment().name());
         ticket.setSentimentScore(sentimentOutput.score());
@@ -144,15 +305,16 @@ public class CustomerIntelligenceService {
                     applicationId,
                     tenantId,
                     triageDecision.escalationReason(),
-                    redaction.redactedText(),
+                    norm.normalizedText(),
+                    norm.slangDetected(),
                     sentimentOutput.score(),
                     triageDecision.promiseGuardFlagged()
             );
         }
 
         auditService.record(new AuditEvent(
-                "SYSTEM",
-                "system",
+                isAdmin ? "PLATFORM_USER" : "APPLICATION",
+                isAdmin ? "admin-console" : (applicationCode != null ? applicationCode : "system"),
                 applicationId,
                 tenantId,
                 "CUSTOMER_TICKET_TRIAGED",
@@ -163,7 +325,9 @@ public class CustomerIntelligenceService {
                         "ticket_number", ticketNumber,
                         "category", triageDecision.category().name(),
                         "priority", triageDecision.priority().name(),
-                        "escalated", triageDecision.escalationRecommended()
+                        "escalated", triageDecision.escalationRecommended(),
+                        "slang_normalized", norm.slangDetected(),
+                        "slang_replacements_count", norm.replacements().size()
                 ),
                 null
         ));
@@ -178,6 +342,9 @@ public class CustomerIntelligenceService {
                 sentimentOutput.score(),
                 triageDecision.routingQueue(),
                 redaction.redactedText(),
+                norm.normalizedText(),
+                norm.slangDetected(),
+                norm.replacements(),
                 redaction.piiDetected(),
                 redaction.piiEntities(),
                 triageDecision.promiseGuardFlagged(),
@@ -198,17 +365,19 @@ public class CustomerIntelligenceService {
             UUID tenantId,
             EscalationReason reason,
             String messageText,
+            boolean slangNormalized,
             double sentimentScore,
             boolean promiseViolation
     ) {
         UUID escalationId = UUID.randomUUID();
         String summary = "Customer ticket " + ticketNumber + " escalated due to: " + reason.name() +
+                (slangNormalized ? " [Colloquial ID chat normalized]" : "") +
                 ". Message snippet: \"" + truncate(messageText, 140) + "\".";
 
         String sentimentSummary = "Detected sentiment score: " + sentimentScore +
                 (sentimentScore < -0.5 ? " (Severe customer frustration detected)" : " (Elevated friction)");
 
-        String attempts = "Automated policy evaluation conducted. Promise safety check applied.";
+        String attempts = "Automated policy evaluation conducted. Colloquial spelling normalization & Promise safety check applied.";
 
         List<String> actions = new ArrayList<>();
         if (promiseViolation) {
@@ -272,18 +441,19 @@ public class CustomerIntelligenceService {
 
         for (String raw : reviews) {
             var sanitized = privacyGuard.sanitize(raw);
-            var result = sentimentEngine.analyze(sanitized.redactedText());
+            var norm = slangNormalizer.normalize(sanitized.redactedText(), request.locale());
+            var result = sentimentEngine.analyze(norm.normalizedText());
             sumScore += result.score();
 
-            String lower = sanitized.redactedText().toLowerCase(Locale.ROOT);
+            String lower = norm.normalizedText().toLowerCase(Locale.ROOT);
             if (result.sentiment() == CustomerSentiment.POSITIVE) {
-                pros.add(sanitized.redactedText());
+                pros.add(norm.normalizedText());
             } else if (result.sentiment() == CustomerSentiment.NEGATIVE) {
-                cons.add(sanitized.redactedText());
+                cons.add(norm.normalizedText());
             }
 
-            if (lower.contains("dark mode") || lower.contains("add") || lower.contains("fitur") || lower.contains("tolong")) {
-                featureRequests.add(sanitized.redactedText());
+            if (lower.contains("dark mode") || lower.contains("add") || lower.contains("tambahkan") || lower.contains("fitur") || lower.contains("tolong")) {
+                featureRequests.add(norm.normalizedText());
             }
 
             evidence.add("\"" + truncate(sanitized.redactedText(), 80) + "\"");
@@ -322,7 +492,8 @@ public class CustomerIntelligenceService {
             UUID tenantId,
             boolean isAdmin
     ) {
-        String goal = request.customerGoal().toLowerCase(Locale.ROOT);
+        var normGoal = slangNormalizer.normalize(request.customerGoal(), request.locale());
+        String goal = normGoal.normalizedText().toLowerCase(Locale.ROOT);
         boolean isId = request.locale() != null && request.locale().equalsIgnoreCase("id");
 
         List<RecommendedFeatureView> features = new ArrayList<>();
@@ -343,7 +514,7 @@ public class CustomerIntelligenceService {
             ));
         }
 
-        if (goal.contains("budget") || goal.contains("anggaran") || goal.contains("50-30-20") || goal.contains("gaji")) {
+        if (goal.contains("budget") || goal.contains("anggaran") || goal.contains("50-30-20") || goal.contains("gaji") || goal.contains("rugi")) {
             features.add(new RecommendedFeatureView(
                     "RULE_50_30_20_BUDGETING",
                     isId ? "Panduan Anggaran 50/30/20 Otomatis" : "Automated 50/30/20 Budgeting Rule",
@@ -487,7 +658,6 @@ public class CustomerIntelligenceService {
         entity.setUpdatedAt(Instant.now());
         escalationMapper.updateById(entity);
 
-        // Also update linked ticket
         if (entity.getTicketId() != null) {
             CustomerTicketEntity ticket = ticketMapper.selectById(entity.getTicketId());
             if (ticket != null) {
@@ -514,6 +684,8 @@ public class CustomerIntelligenceService {
         int promisePassed = 0;
         int escalationTested = 0;
         int escalationPassed = 0;
+        int slangTested = 0;
+        int slangPassed = 0;
 
         Map<String, Integer> breakdowns = new LinkedHashMap<>();
         List<Map<String, Object>> details = new ArrayList<>();
@@ -522,9 +694,10 @@ public class CustomerIntelligenceService {
             breakdowns.put(c.getSuiteCode(), breakdowns.getOrDefault(c.getSuiteCode(), 0) + 1);
 
             var redaction = privacyGuard.sanitize(c.getInputText());
-            var sentimentOut = sentimentEngine.analyze(redaction.redactedText());
+            var norm = slangNormalizer.normalize(redaction.redactedText(), c.getLocale());
+            var sentimentOut = sentimentEngine.analyze(norm.normalizedText());
             var triage = triageEngine.triage(
-                    redaction.redactedText(),
+                    norm.normalizedText(),
                     c.getLocale(),
                     sentimentOut.sentiment(),
                     sentimentOut.score(),
@@ -537,6 +710,8 @@ public class CustomerIntelligenceService {
             detail.put("suite_code", c.getSuiteCode());
             detail.put("locale", c.getLocale());
             detail.put("input", truncate(c.getInputText(), 50));
+            detail.put("normalized_input", truncate(norm.normalizedText(), 60));
+            detail.put("slang_normalized", norm.slangDetected());
 
             // Sentiment check
             if (c.getExpectedSentiment() != null) {
@@ -574,6 +749,19 @@ public class CustomerIntelligenceService {
                 detail.put("escalation_match", match);
             }
 
+            // Colloquial / slang normalization accuracy tracking
+            boolean isSlangCase = c.getNotes() != null && c.getNotes().contains("[ID-SLANG]");
+            if (isSlangCase) {
+                slangTested++;
+                boolean slangOk = norm.slangDetected() && caseSuccess;
+                if (slangOk) {
+                    slangPassed++;
+                } else {
+                    caseSuccess = false;
+                }
+                detail.put("slang_case_passed", slangOk);
+            }
+
             detail.put("passed", caseSuccess);
             details.add(detail);
 
@@ -584,6 +772,7 @@ public class CustomerIntelligenceService {
         double sentimentAcc = sentimentTotal > 0 ? (sentimentCorrect * 100.0 / sentimentTotal) : 100.0;
         double promiseRate = promiseTested > 0 ? (promisePassed * 100.0 / promiseTested) : 100.0;
         double escalationPrec = escalationTested > 0 ? (escalationPassed * 100.0 / escalationTested) : 100.0;
+        double slangAcc = slangTested > 0 ? (slangPassed * 100.0 / slangTested) : 100.0;
         double f1Score = (sentimentAcc + promiseRate + escalationPrec) / 300.0;
 
         return new CustomerBenchmarkResult(
@@ -594,6 +783,8 @@ public class CustomerIntelligenceService {
                 Math.round(f1Score * 10000.0) / 10000.0,
                 Math.round(promiseRate * 100.0) / 100.0,
                 Math.round(escalationPrec * 100.0) / 100.0,
+                slangTested,
+                Math.round(slangAcc * 100.0) / 100.0,
                 breakdowns,
                 details,
                 Instant.now()
@@ -621,6 +812,7 @@ public class CustomerIntelligenceService {
     private CustomerTicketView toTicketView(CustomerTicketEntity e) {
         List<PiiEntityView> piiList = readJson(e.getPiiEntitiesJson(), new TypeReference<>() {});
         List<String> promiseReasons = readJson(e.getPromiseGuardReasons(), new TypeReference<>() {});
+        List<CustomerSlangReplacementView> slangList = readJson(e.getSlangReplacementsJson(), new TypeReference<>() {});
 
         return new CustomerTicketView(
                 e.getId(),
@@ -631,6 +823,9 @@ public class CustomerIntelligenceService {
                 e.getCustomerName(),
                 e.getSubject(),
                 e.getRedactedMessage(),
+                e.getNormalizedMessage() != null ? e.getNormalizedMessage() : e.getRedactedMessage(),
+                Boolean.TRUE.equals(e.getSlangNormalized()),
+                slangList != null ? slangList : List.of(),
                 Boolean.TRUE.equals(e.getPiiDetected()),
                 piiList != null ? piiList : List.of(),
                 e.getLocale(),
@@ -698,4 +893,3 @@ public class CustomerIntelligenceService {
         return text.length() <= maxLen ? text : text.substring(0, maxLen) + "...";
     }
 }
-

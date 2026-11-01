@@ -36,6 +36,17 @@ public class CustomerGatewayController {
         this.entitlementService = entitlementService;
     }
 
+    @PostMapping("/slang/normalize")
+    @Operation(summary = "Normalize Indonesian slang, abbreviations, and colloquial spellings in customer support chat with PII masking and non-banking boundary checks")
+    public ApiResponse<CustomerSlangNormalizeResult> normalizeSupportChat(
+            @AuthenticationPrincipal VerifiedRequestContext ctx,
+            @Valid @RequestBody CustomerSlangNormalizeRequest request,
+            HttpServletRequest servletRequest
+    ) {
+        entitlementService.assertEntitled(ctx.applicationId(), CAPABILITY_CODE, servletRequest.getRemoteAddr());
+        return ApiResponse.ok(customerService.normalizeSupportChat(request));
+    }
+
     @PostMapping("/sentiment/analyze")
     @Operation(summary = "Analyze customer text sentiment, urgency, aspects, and sanitize PII")
     public ApiResponse<SentimentAnalysisResult> analyzeSentiment(

@@ -29,10 +29,20 @@ public class CustomerPromiseGuard {
             "janji kembalikan uang",
             "janji uang saya kembali",
             "garansi uang kembali",
+            "kembalikan uang",
+            "balikin duit",
+            "refund uang",
+            "refund dana",
             "transfer saldo ke rekening",
+            "transfer uang ke rekening",
+            "transfer ke rekening",
             "transfer dana ke",
             "kirim saldo ke rekening",
+            "kirim uang ke rekening",
             "tarik tunai otomatis",
+            "cairkan saldo",
+            "cairkan dana",
+            "bayarkan tagihan",
             "proses refund rekening"
     );
 

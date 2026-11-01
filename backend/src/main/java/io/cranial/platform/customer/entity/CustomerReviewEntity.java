@@ -34,6 +34,12 @@ public class CustomerReviewEntity {
     @TableField("redacted_review")
     private String redactedReview;
 
+    @TableField("normalized_review")
+    private String normalizedReview;
+
+    @TableField("slang_normalized")
+    private Boolean slangNormalized;
+
     @TableField("sentiment")
     private String sentiment;
 
@@ -69,6 +75,12 @@ public class CustomerReviewEntity {
 
     public String getRedactedReview() { return redactedReview; }
     public void setRedactedReview(String redactedReview) { this.redactedReview = redactedReview; }
+
+    public String getNormalizedReview() { return normalizedReview; }
+    public void setNormalizedReview(String normalizedReview) { this.normalizedReview = normalizedReview; }
+
+    public Boolean getSlangNormalized() { return slangNormalized; }
+    public void setSlangNormalized(Boolean slangNormalized) { this.slangNormalized = slangNormalized; }
 
     public String getSentiment() { return sentiment; }
     public void setSentiment(String sentiment) { this.sentiment = sentiment; }

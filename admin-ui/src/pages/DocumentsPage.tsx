@@ -10,6 +10,7 @@ import type {
   OcrBenchmarkResult,
 } from '../api/types';
 import { useLanguage } from '../i18n/LanguageContext';
+import { ErrorExplanationBanner } from '../components/ErrorExplanationBanner';
 
 type DocTab = 'playground' | 'documents' | 'review' | 'configs' | 'estimator' | 'benchmarks';
 
@@ -309,7 +310,11 @@ export default function DocumentsPage() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-rose-500/40 bg-rose-950/40 p-3.5 text-sm text-rose-200">{error}</div>
+        <ErrorExplanationBanner
+          errorCode="DOCUMENT_PROCESSING_FAILED"
+          errorMessage={error}
+          onRetry={loadAll}
+        />
       )}
 
       <div className="flex flex-wrap gap-2 border-b border-slate-800 pb-3">

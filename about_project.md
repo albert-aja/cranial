@@ -1,10 +1,142 @@
 # CRANIAL — Universal AI Integration Platform
 
+![Logo](assets/logo/logo.png)
+
 > **Tagline:** One Brain. Many Connections.
 
 > **Document purpose:** This file is the primary project-context document for an AI coding agent. It explains the product vision, architecture, capabilities, integrations, boundaries, security requirements, and recommended implementation backlog.
 >
 > **Project principle:** Build one independent, reusable AI platform that provides shared intelligence capabilities to Peggy, the Store Management System (SMS), the Worker App, e-commerce, and future applications.
+
+---
+
+## Table of Contents
+
+- [Part I: Architectural Blueprint & Specifications](#part-i-architectural-blueprint--specifications)
+  - [Table of Contents](#table-of-contents)
+- [Part I: Architectural Blueprint & Specifications](#part-i-architectural-blueprint--specifications)
+  - [1. Project Identity and Vision](#1-project-identity-and-vision)
+  - [2. Architecture and Ownership Boundaries](#2-architecture-and-ownership-boundaries)
+  - [3. Deployment and Integration Decisions](#3-deployment-and-integration-decisions)
+  - [4. Local-First and Cost Policy](#4-local-first-and-cost-policy)
+  - [5. Core Platform Modules](#5-core-platform-modules)
+  - [6. Shared Intelligence Capabilities](#6-shared-intelligence-capabilities)
+  - [7. Application Integration Examples](#7-application-integration-examples)
+  - [8. API Contract](#8-api-contract)
+  - [9. Asynchronous Processing](#9-asynchronous-processing)
+  - [10. Multi-Tenancy, Authorization, and Privacy](#10-multi-tenancy-authorization-and-privacy)
+  - [11. Suggested Database Domains](#11-suggested-database-domains)
+  - [12. Admin Dashboard](#12-admin-dashboard)
+  - [13. Security and Reliability Requirements](#13-security-and-reliability-requirements)
+  - [14. Testing and Evaluation](#14-testing-and-evaluation)
+  - [15. Development Strategy and Phases](#15-development-strategy-and-phases)
+  - [16. Initial Integration Priorities](#16-initial-integration-priorities)
+  - [17. Suggested Backend Structure](#17-suggested-backend-structure)
+  - [18. Coding Agent Rules](#18-coding-agent-rules)
+  - [19. Definition of Done](#19-definition-of-done)
+- [Part II: Implemented Features](#part-ii-implemented-features)
+  - [Phase 1 — Platform Foundation (Completed)](#phase-1--platform-foundation-completed)
+  - [Phase 2 — Provider Infrastructure, Model Registry, Routing & Telemetry (Completed)](#phase-2--provider-infrastructure-model-registry-routing--telemetry-completed)
+  - [Phase 3 — Orchestration and Prompt/Schema Management (Completed)](#phase-3--orchestration-and-promptschema-management-completed)
+  - [Phase 4 & Section 20.8 — Conversational Intelligence (Completed)](#phase-4--section-208--conversational-intelligence-completed)
+  - [Section 20.2 Model and Provider Management Improvements (Completed)](#section-202-model-and-provider-management-improvements-completed)
+  - [Dual Language Support — English & Bahasa Indonesia (Completed)](#dual-language-support--english--bahasa-indonesia-completed)
+  - [Phase 5 & Section 20.4 — Document Intelligence and OCR (Completed)](#phase-5--section-204--document-intelligence-and-ocr-completed)
+  - [Phase 6 & Section 20.5 — Knowledge Intelligence and RAG (Completed)](#phase-6--section-205--knowledge-intelligence-and-rag-completed)
+  - [Phase 7 & Section 20.6 — Data Intelligence and Analytics (Completed)](#phase-7--section-206--data-intelligence-and-analytics-completed)
+  - [Phase 8 & Section 20.7 — Decision Intelligence and Optimization (Completed)](#phase-8--section-207--decision-intelligence-and-optimization-completed)
+  - [Phase 9 & Section 20.9 — Customer Intelligence (Completed)](#phase-9--section-209--customer-intelligence-completed)
+  - [Phase 10 — Application Integrations, Client SDKs & MCP Readiness (Completed)](#phase-10--application-integrations-client-sdks--mcp-readiness-completed)
+  - [Phase 8 & Section 20.7 — Decision Intelligence and Optimization (Completed)](#phase-8--section-207--decision-intelligence-and-optimization-completed)
+  - [Phase 9 & Section 20.9 — Customer Intelligence (Completed)](#phase-9--section-209--customer-intelligence-completed)
+  - [Phase 10 — Application Integrations, Client SDKs & MCP Readiness (Completed)](#phase-10--application-integrations-client-sdks--mcp-readiness-completed)
+  - [Section 20.12 — Admin Dashboard UI/UX & Operator Experience (Completed)](#section-2012--admin-dashboard-uiux--operator-experience-completed)
+- [Part III: Product Backlog & Improvements (Section 20)](#part-iii-product-backlog--improvements-section-20)
+  - [20.1 Foundation and architecture](#201-foundation-and-architecture)
+  - [20.2 Model and provider management](#202-model-and-provider-management)
+  - [20.3 Orchestration and workflow improvements](#203-orchestration-and-workflow-improvements)
+  - [20.4 Document intelligence and OCR](#204-document-intelligence-and-ocr)
+  - [20.5 Knowledge intelligence and RAG](#205-knowledge-intelligence-and-rag)
+  - [20.6 Data intelligence and analytics](#206-data-intelligence-and-analytics)
+  - [20.7 Decision intelligence and optimization](#207-decision-intelligence-and-optimization)
+  - [20.8 Conversational intelligence](#208-conversational-intelligence)
+  - [20.9 Customer intelligence](#209-customer-intelligence)
+  - [20.10 Security, privacy, and governance](#2010-security-privacy-and-governance)
+  - [20.11 Performance, scalability, and reliability](#2011-performance-scalability-and-reliability)
+  - [20.12 Admin dashboard UI/UX](#2012-admin-dashboard-uiux)
+  - [20.13 Developer experience and integrations](#2013-developer-experience-and-integrations)
+  - [20.14 Operations and observability](#2014-operations-and-observability)
+  - [20.15 Testing and quality improvements](#2015-testing-and-quality-improvements)
+  - [20.16 Future major feature candidates](#2016-future-major-feature-candidates)
+- [Part IV: Governance, Prioritization & Principles](#part-iv-governance-prioritization--principles)
+  - [21. Backlog Prioritization Guidance](#21-backlog-prioritization-guidance)
+  - [22. Final Architectural Principles](#22-final-architectural-principles)
+
+---
+
+# Part I: Architectural Blueprint & Specifications
+
+---
+
+## Table of Contents
+
+- [Part I: Architectural Blueprint & Specifications](#part-i-architectural-blueprint--specifications)
+  - [1. Project Identity and Vision](#1-project-identity-and-vision)
+  - [2. Architecture and Ownership Boundaries](#2-architecture-and-ownership-boundaries)
+  - [3. Deployment and Integration Decisions](#3-deployment-and-integration-decisions)
+  - [4. Local-First and Cost Policy](#4-local-first-and-cost-policy)
+  - [5. Core Platform Modules](#5-core-platform-modules)
+  - [6. Shared Intelligence Capabilities](#6-shared-intelligence-capabilities)
+  - [7. Application Integration Examples](#7-application-integration-examples)
+  - [8. API Contract](#8-api-contract)
+  - [9. Asynchronous Processing](#9-asynchronous-processing)
+  - [10. Multi-Tenancy, Authorization, and Privacy](#10-multi-tenancy-authorization-and-privacy)
+  - [11. Suggested Database Domains](#11-suggested-database-domains)
+  - [12. Admin Dashboard](#12-admin-dashboard)
+  - [13. Security and Reliability Requirements](#13-security-and-reliability-requirements)
+  - [14. Testing and Evaluation](#14-testing-and-evaluation)
+  - [15. Development Strategy and Phases](#15-development-strategy-and-phases)
+  - [16. Initial Integration Priorities](#16-initial-integration-priorities)
+  - [17. Suggested Backend Structure](#17-suggested-backend-structure)
+  - [18. Coding Agent Rules](#18-coding-agent-rules)
+  - [19. Definition of Done](#19-definition-of-done)
+- [Part II: Implemented Features](#part-ii-implemented-features)
+  - [Phase 1 — Platform Foundation](#phase-1--platform-foundation-completed)
+  - [Phase 2 — Provider Infrastructure, Model Registry, Routing & Telemetry](#phase-2--provider-infrastructure-model-registry-routing--telemetry-completed)
+  - [Phase 3 — Orchestration and Prompt/Schema Management](#phase-3--orchestration-and-promptschema-management-completed)
+  - [Section 20.2 — Model and Provider Management Improvements](#section-202-model-and-provider-management-improvements-completed)
+  - [Dual Language Support — English & Bahasa Indonesia](#dual-language-support---english--bahasa-indonesia-completed)
+  - [Phase 5 & Section 20.4 — Document Intelligence and OCR](#phase-5--section-204---document-intelligence-and-ocr-completed)
+  - [Phase 6 & Section 20.5 — Knowledge Intelligence and RAG](#phase-6--section-205---knowledge-intelligence-and-rag-completed)
+  - [Phase 7 & Section 20.6 — Data Intelligence and Analytics](#phase-7--section-206---data-intelligence-and-analytics-completed)
+  - [Phase 8 & Section 20.7 — Decision Intelligence and Optimization](#phase-8--section-207--decision-intelligence-and-optimization-completed)
+  - [Phase 9 & Section 20.9 — Customer Intelligence](#phase-9--section-209--customer-intelligence-completed)
+  - [Phase 10 — Application Integrations, Client SDKs & MCP Readiness](#phase-10--application-integrations-client-sdks--mcp-readiness-completed)
+  - [Section 20.12 — Admin Dashboard UI/UX & Operator Experience](#section-2012--admin-dashboard-uiux--operator-experience-completed)
+- [Part III: Product Backlog & Improvements](#part-iii-product-backlog--improvements)
+  - [20.1 Foundation and architecture](#201-foundation-and-architecture)
+  - [20.2 Model and provider management](#202-model-and-provider-management)
+  - [20.3 Orchestration and workflow improvements](#203-orchestration-and-workflow-improvements)
+  - [20.4 Document intelligence and OCR](#204-document-intelligence-and-ocr)
+  - [20.5 Knowledge intelligence and RAG](#205-knowledge-intelligence-and-rag)
+  - [20.6 Data intelligence and analytics](#206-data-intelligence-and-analytics)
+  - [20.7 Decision intelligence and optimization](#207-decision-intelligence-and-optimization)
+  - [20.8 Conversational intelligence](#208-conversational-intelligence)
+  - [20.9 Customer intelligence](#209-customer-intelligence)
+  - [20.10 Security, privacy, and governance](#2010-security-privacy-and-governance)
+  - [20.11 Performance, scalability, and reliability](#2011-performance-scalability-and-reliability)
+  - [20.12 Admin dashboard UI/UX](#2012-admin-dashboard-uiux)
+  - [20.13 Developer experience and integrations](#2013-developer-experience-and-integrations)
+  - [20.14 Operations and observability](#2014-operations-and-observability)
+  - [20.15 Testing and quality improvements](#2015-testing-and-quality-improvements)
+  - [20.16 Future major feature candidates](#2016-future-major-feature-candidates)
+- [Part IV: Governance, Prioritization & Principles](#part-iv-governance-prioritization--principles)
+  - [21. Backlog Prioritization Guidance](#21-backlog-prioritization-guidance)
+  - [22. Final Architectural Principles](#22-final-architectural-principles)
+
+---
+
+# Part I: Architectural Blueprint & Specifications
 
 ---
 
@@ -1252,7 +1384,7 @@ For each implemented feature, verify:
 
 ---
 
-# Implemented Features
+# Part II: Implemented Features
 
 This section documents completed capabilities and backlog items moved out of the TODO list upon completion, with full architectural and security explanations.
 
@@ -1392,6 +1524,78 @@ This section documents completed capabilities and backlog items moved out of the
      - **Safe Tools Tab:** Application tool registry with read-only badges and an embedded sandboxed tool execution tester.
      - **Execution Traces Inspector:** Searchable log of orchestration runs with a modal step inspector displaying latency breakdowns and step-level metadata.
 
+
+## Phase 4 & Section 20.8 — Conversational Intelligence (Completed)
+
+Purpose: Provide multi-turn, natural-language conversational interfaces to application-owned money management workflows, store operational reviews, worker SOP guidance, and customer support with strict non-banking policy boundaries.
+
+### Architectural Invariant: Non-Banking Money Management Platform
+CRANIAL and client applications (e.g. Peggy, SMS Store, Worker App) are strictly money management and analytical applications. Under NO circumstances does CRANIAL initiate payments, debit customer bank accounts, wire funds, disburse cash, open deposit accounts, issue cards, or execute ATM withdrawals. All queries attempting banking actions are intercepted by the `BankingActionSafetyGuard` with zero tolerance, generating an educational disclaimer and redirecting the user to record the transaction in their budgeting ledger after performing the transfer via their certified bank.
+
+### Core Capabilities Implemented
+
+1. **Multi-Turn Conversation Storage & Application Isolation**
+   - `ai_conversations`: Scoped strictly by `application_id` and optional `tenant_id`. Tracks `user_id`, auto-generated title, `locale`, `status` (`ACTIVE`, `ARCHIVED`, `PURGED`), `total_turn_count`, and `total_tokens_used`.
+   - `ai_conversation_messages`: Stores turn history with roles (`USER`, `ASSISTANT`, `SYSTEM`, `TOOL`), raw unnormalized input, token counts, structured UI blocks, grounded citations, tools invoked, model identifier, and latency telemetry.
+   - Title generation: `ConversationTitleGenerator` automatically derives clean 3–5 word descriptive titles in English or Indonesian from the initial inquiry.
+
+2. **Indonesian Slang & Currency Colloquialism Normalizer (`SlangNormalizerEngine`)**
+   - Automatically detects and expands colloquial Indonesian currency numbers before model ingestion:
+     - *gotiau* -> `Rp 50.000.000`
+     - *pekgo* -> `Rp 150.000`
+     - *goban* / *gocap* -> `Rp 50.000`
+     - *ceban* -> `Rp 10.000`
+     - *noceng* -> `Rp 2.000`
+     - *seceng* -> `Rp 1.000`
+     - *pego* -> `Rp 150`
+     - *cepek* -> `Rp 100`
+     - Abbreviated suffixes: `8jt` / `8juta` -> `Rp 8.000.000`, `50k` / `50rb` -> `Rp 50.000`
+   - Normalizes informal financial phrasing: *boncos* (budget deficit/loss), *balikin duit* (refund), *batalin* (cancel), *duit* (uang), *gajian* (monthly salary), *bokek* (low balance), *sisa duit* (budget surplus).
+   - Preserves original raw input alongside normalized content for audit transparency.
+
+3. **Strict Non-Banking Safety Guard (`BankingActionSafetyGuard`)**
+   - Intercepts requests attempting fund transfers (*transfer uang*, *kirim dana*, *wire funds*), direct payment processing (*bayar listrik sekarang*, *pay bill now*), card issuance (*buka rekening bank*, *issue debit card*), and ATM cash withdrawals (*tarik tunai ATM*).
+   - Flags `is_safety_violation=true` with reason `NON_BANKING_APPLICATION_POLICY`.
+   - Generates structured `FINANCIAL_DISCLAIMER` blocks explaining platform boundaries and emits an `ACTION_CARD` guiding the user to record the manual payment in their budgeting ledger.
+
+4. **Context Window Manager & Sliding Memory (`ContextWindowManager`)**
+   - Enforces per-application turn boundaries (`max_context_turns`, default 20) and token budgets (`max_context_tokens`, default 4096).
+   - Sliding window compaction: when conversation turn counts or token limits are reached, older turns are systematically condensed into a rolling `context_summary` while the latest turns remain verbatim.
+
+5. **Clarification Question Workflows (`ClarificationEngine`)**
+   - Automatically detects ambiguous queries lacking required parameters (e.g. general spending inquiries without a date range, budgeting requests without income amount, or generic inventory checks).
+   - Formulates structured `CLARIFICATION` blocks offering clickable option chips (*Hari Ini*, *Minggu Ini*, *Bulan Ini*, *Rp 5.000.000/bln*, *Rp 10.000.000/bln*, *Stok Menipis*).
+
+6. **Structured UI Response Blocks (`StructuredUiBlock`)**
+   - Standardized JSON response blocks for client application rendering:
+     - `TEXT`: Formatted natural-language narrative.
+     - `TABLE`: Multi-column data grid (e.g. 50/30/20 budget breakdown, inventory reorder list).
+     - `ACTION_CARD`: Actionable card with title, description, and primary CTA button payload.
+     - `CHART_KPI`: High-level metrics with current value and trend status.
+     - `CLARIFICATION`: Interactive followup option buttons.
+     - `FINANCIAL_DISCLAIMER`: Explicit non-banking platform boundary notices.
+
+7. **Grounded Source Citations & References (`SourceReferenceView`)**
+   - Emits grounded citation blocks with source ID, title, URI, snippet, and relevance confidence score.
+
+8. **Feedback Telemetry & Governance (`ai_conversation_feedbacks`)**
+   - Thumbs up / thumbs down helpfulness and correctness indicators.
+   - 1-to-5 star ratings, feedback categories (`ACCURACY`, `TONE`, `SAFETY_FALSE_POSITIVE`, `FORMATTING`), and operator comments.
+
+9. **Retention Policies & Automated Pruning (`ai_conversation_retention_policies`)**
+   - Configurable per-application retention days (Peggy: 180 days, SMS: 90 days, Worker: 60 days, E-Commerce: 90 days).
+   - Automated pruning service (`pruneExpiredConversations`) soft-deletes or purges sessions exceeding retention thresholds.
+   - Export endpoints supporting clean Markdown and JSON serialization for compliance.
+
+10. **Admin Operator Console (`ConversationsPage.tsx`)**
+    - **Sessions Explorer**: Searchable and filterable table of conversations across applications, tenants, and statuses with export and deletion actions.
+    - **Interactive Assistant & Simulator**: Full multi-turn testbed rendering structured UI blocks, slang translations, citation chips, token budget counters, and feedback controls.
+    - **Indonesian Slang Normalizer**: Standalone testbed to inspect real-time slang translation into standard numerical queries.
+    - **Non-Banking Safety Guard**: Live policy rule monitor and violation log inspector.
+    - **Retention & Governance**: Per-app policy table and on-demand prune trigger.
+    - **Benchmarks**: Quality, latency, safety interception, and satisfaction analytics.
+
+---
 
 ## Section 20.2 Model and Provider Management Improvements (Completed)
 
@@ -1694,83 +1898,7 @@ This section documents completed capabilities and backlog items moved out of the
       - **Dataset Connectors:** Visual cards for registered reporting connectors with schemas, refresh policies, record counts, and registration modal.
       - **Cache & Benchmarks:** Cache hit telemetry, purge button, and 1-click Deterministic Benchmark Runner with accuracy score and per-test latency table.
 
----
-
-# 20. TODO & Product Improvement Backlog
-
-This backlog is intentionally broad. It includes major capabilities, smaller features, security, reliability, performance, developer experience, admin UX, and integration improvements. Items are recommendations, not a requirement to implement all of them immediately.
-
-Update status as work progresses. Move completed items to `# Implemented Features` with detailed explanations. Add new ideas when discovered. Prioritize based on dependencies, risk, user value, and measurable benefit.
-
-**Status legend:** `[ ]` Not started · `[~]` In progress · `[x]` Completed · `[-]` Deferred / rejected
-
-## 20.1 Foundation and architecture
-
-- [ ] Add distributed lock (`ShedLock` or Redis lock) for multi-replica scheduled maintenance coordination.
-- [ ] Add OpenTelemetry distributed tracing context propagation (`traceparent`, `tracestate`) across HTTP gateway and background tasks.
-- [ ] Add automated database schema migration drift verification against Docker PostgreSQL in CI.
-- [ ] Add key-version tagging on `AES-256-GCM` encrypted secrets to support zero-downtime master encryption key rotation.
-
-## 20.2 Model and provider management
-
-*(Completed items moved to `# Implemented Features -> Section 20.2 Model and Provider Management Improvements` with detailed explanations.)*
-
-- [ ] Add local model download/setup guidance in the admin panel.
-- [ ] Add model version and configuration history.
-- [ ] Add model deprecation and replacement workflows.
-- [ ] Add provider timeout and circuit-breaker configuration via Admin UI.
-- [ ] Add model benchmark runs using a fixed evaluation dataset.
-- [ ] Add model comparison reports for quality, speed, and resource use.
-- [ ] Add dynamic token budget negotiation based on prompt complexity and model context window.
-- [ ] Add model warm-pool scheduler keeping frequently used local models resident in VRAM based on usage patterns.
-- [ ] Add automatic model fallthrough retry on transient HTTP 5xx or connection resets.
-- [ ] Add live token generation speed counter (tokens/sec) to Model Playground streaming display.
-- [ ] Add multi-turn conversation simulator to Model Playground.
-- [ ] Add optional hosted-provider adapters behind explicit opt-in policies.
-- [ ] Add alert threshold notifications when host CPU/RAM or GPU VRAM utilization exceeds 90% for prolonged periods.
-- [ ] Add Apple Silicon Metal / MPS Unified Memory telemetry probe for macOS developer deployments.
-
-## 20.3 Orchestration and workflow improvements
-
-- [ ] Add multi-step iterative tool execution loop (ReAct / reflection loop) with configurable maximum iteration count.
-- [ ] Add prompt differential comparison (diff viewer) in Admin UI between prompt versions.
-- [ ] Add prompt A/B testing canary distribution across integration task executions.
-- [ ] Add tool response caching with configurable TTL for idempotent read-only tool calls.
-- [ ] Add synthetic benchmark evaluation runner for prompt regression testing against fixed datasets.
-- [ ] Add workflow cancellation and safe compensation patterns.
-- [ ] Add human approval checkpoints.
-- [ ] Add confidence thresholds and abstention behavior.
-- [ ] Add explicit uncertainty and missing-information representation.
-- [ ] Add prompt-injection test cases for tool-using workflows.
-- [ ] Add duplicate-request detection for long-running workflows.
-
-## 20.4 Document intelligence and OCR
-
-*(Completed items moved to `# Implemented Features -> Phase 5 & Section 20.4 — Document Intelligence and OCR`.)*
-
-- [ ] Add support for handwritten text only if a suitable model and evaluation set justify it.
-- [ ] Add S3-compatible / Supabase Storage encrypted blob backend adapter alongside local disk `DocumentStorageService` for multi-node deployments.
-- [ ] Add interactive bounding-box visual overlay on scanned receipt/invoice previews in `DocumentsPage.tsx` using word-level TSV coordinates from Tesseract.
-- [ ] Add signed outbound webhook notifications (`X-Cranial-Webhook-Signature`) when asynchronous multi-page document jobs transition to `COMPLETED`, `PARTIAL_SUCCESS`, or `PENDING_REVIEW`.
-- [ ] Add CSV / JSON export endpoint for extracted document tables and receipt line-item batches (strictly read-only export for money-management import).
-- [ ] Add adaptive Sauvola local thresholding option in `ImagePreprocessor` for uneven shadow illumination on mobile camera captures.
-- [ ] Add ClamAV daemon (`INSTREAM`) optional malware scanner hook inside `DocumentSecurityValidator` for high-compliance deployments.
-
-## 20.5 Knowledge intelligence and RAG
-
-*(Completed items moved to `# Implemented Features -> Phase 6 & Section 20.5 — Knowledge Intelligence and RAG` with detailed explanations.)*
-
-- [ ] Add local cross-encoder neural reranker adapter (e.g. `bge-reranker-base` via ONNX runtime or Python sidecar) as a secondary fine-grained reranking stage for top-50 candidate pools.
-- [ ] Add Reciprocal Rank Fusion (RRF) formula support (`RRF_score = 1 / (60 + rank)`) alongside weighted linear combination for merging BM25 and vector score ranks.
-- [ ] Add Contextual Retrieval chunk enrichment (Anthropic contextual embedding pattern) that prepends document context summaries and section hierarchies directly into chunk text before embedding.
-- [ ] Add interactive PDF page deep-linking viewer in `KnowledgePage.tsx` allowing operators to click any `[Page N]` citation and open the high-resolution source document page view directly.
-- [ ] Add Indonesian morphological lemmatizer / Nazief-Adriani stemmer plugin to the BM25 lexical analyzer for improved Indonesian root-word matching (*membiayai*, *pembiayaan* → *biaya*).
-- [ ] Add multi-query decomposition agent capable of breaking down complex multi-condition analytical queries into atomic sub-questions before querying knowledge collections.
-- [ ] Add scheduled CRON trigger for automated feed connector polling in background maintenance worker (`PlatformMaintenanceService`).
-- [ ] Add exportable evaluation benchmark reports (Markdown and CSV) tracking Hit Rate@K, MRR, and citation accuracy trends across releases.
-
-
-## Phase 8 & Section 20.7 â Decision Intelligence and Optimization (Completed)
+## Phase 8 & Section 20.7 — Decision Intelligence and Optimization (Completed)
 
 1. **Database Schema & Route Seeding (`V10__phase8_decision_intelligence_and_optimization.sql`):**
    - Created 3 normalized tables enforcing the complete decision governance lifecycle:
@@ -1795,8 +1923,8 @@ Update status as work progresses. Move completed items to `# Implemented Feature
 
 4. **Multi-Factor Abstention Safeguards (`AbstentionGuard.java`):**
    - Evaluates three safety vectors before returning any recommendation:
-     - **Data Freshness TTL:** Rejects recommendations when underlying debt statements or bank balances exceed `freshness_ttl_hours` (e.g., older than 48-72 hours).
-     - **Confidence Score Floor:** Strict floor (â¥ 0.65). If confidence is below threshold, the system abstains with `Confidence score below threshold` rather than delivering questionable financial advice.
+     - **Data Freshness TTL:** Rejects recommendations when underlying debt statements or bank balances exceed `freshness_ttl_hours` (e.g., older than 48–72 hours).
+     - **Confidence Score Floor:** Strict floor (≥ 0.65). If confidence is below threshold, the system abstains with `Confidence score below threshold` rather than delivering questionable financial advice.
      - **Hard Constraint Breaches:** Immediate abstention if candidate metrics violate any hard floor.
 
 5. **Human Approval Workflow & State Machine (`DecisionIntelligenceService.java`):**
@@ -1913,9 +2041,424 @@ Update status as work progresses. Move completed items to `# Implemented Feature
       - **Reviews & Feature Discovery:** Dual-pane workbench supporting batch app review summarization with sentiment distribution and customer goal-based product recommendation matcher.
       - **Regression Benchmarks:** 1-click golden dataset benchmark runner visualizing precision, recall, safety compliance rate, and benchmark execution latency.
 
+## Phase 10 — Application Integrations, Client SDKs & MCP Readiness (Completed)
+
+This phase establishes the client integration layer, multi-application adapters, official developer SDKs, Model Context Protocol (MCP) server, and strict security isolation.
+
+1. **SMS (Store Management System) Business Assistant Integration:**
+   - Owner and store operations business assistant powered by read-only deterministic tools (`sms_get_daily_sales`, `sms_get_low_stock_items`).
+   - Summarizes gross sales, order volume, payment breakdowns, low-stock inventory alerts, and replenishment reorder recommendations.
+   - Context claims isolation bound to tenant `sms_store_001` and user `sms_owner_001` with `STORE_OWNER` role.
+
+2. **Worker App Integration with Strict Access Boundaries:**
+   - Logistics, warehousing, and task execution assistant powered by read-only worker tools (`worker_get_assigned_tasks`, `worker_get_delivery_manifest`).
+   - Cryptographically signed worker context claims bound to tenant `sms_store_001` and user `worker_field_001` with `WORKER` role.
+   - **Strict Security Boundary Enforced:** Worker role attempting to query owner financial reports (`sms:owner_reports`) is immediately blocked by role-based scope checks with `ACCESS_DENIED` HTTP 403.
+
+3. **Peggy Personal Money Management (Strictly Non-Banking Invariant):**
+   - Personal budgeting, 50-30-20 category breakdown, monthly spending insights, and receipt OCR previews (`peggy_get_budget_breakdown`, `peggy_get_monthly_spending`).
+   - Context claims bound to tenant `peggy_household_001` and user `peggy_user_001` with `BUDGET_USER` role.
+   - **Invariant Enforcement:** CRANIAL and Peggy are strictly an educational and money management system—**never a banking application**. Any tool invocation containing banking or funds transfer verbs (`payment`, `transfer`, `disburse`, `withdraw`, `bank_wire`, `execute_transaction`) is intercepted immediately at the orchestrator boundary and rejected with `TOOL_PERMISSION_DENIED` HTTP 403.
+
+4. **E-Commerce Customer Support Assistant:**
+   - Real-time customer inquiry assistant with catalog and fulfillment tools (`ecom_get_product_info`, `ecom_get_order_status`).
+   - Supports customer queries on product specifications, stock availability, carrier tracking numbers, delivery ETA, and return policy information.
+   - Context claims bound to tenant `ecommerce_tenant_001` and user `ecom_cust_001` with `CUSTOMER` role.
+
+5. **Diagnostic Gateway & Sandbox Infrastructure:**
+   - `GET /api/v1/integration/health`: Unsigned diagnostic health probe exempt from signed-context requirement for fast liveness checks.
+   - `POST /api/v1/integration/echo`: HMAC-SHA256 signature and context claims verification handshake endpoint.
+   - `GET /api/v1/integration/catalog`: Application-scoped tool discovery endpoint listing available tools, parameters, and description metadata.
+   - `GET /api/admin/v1/integrations/summary` & `GET /api/admin/v1/integrations/sandbox`: Admin console endpoints for developer credentials and connection parameters.
+   - `ApplicationSandboxBootstrapService`: Automatic bootstrapping of predictable DEV sandbox credentials across all 4 applications.
+
+6. **Official Client SDKs & Model Context Protocol (MCP) Server:**
+   - **Java SDK (`sdk/java/`):** Maven library `io.cranial:cranial-client-sdk:0.1.0` with `CranialClient`, `SignedContext`, HMAC-SHA256 signer, thread-safe HTTP client, and unit test suite (100% passed).
+   - **TypeScript SDK (`sdk/typescript/`):** Typed Node.js package `@cranial/client:0.1.0` with crypto-native HMAC signer, typed orchestration methods, and diagnostic probes.
+   - **MCP Server (`sdk/mcp/cranial-mcp-server.js`):** Standardized JSON-RPC 2.0 stdio Model Context Protocol server enabling Claude Desktop, Antigravity, and Cursor to discover CRANIAL tools and run orchestrations.
+
+7. **Comprehensive Integration Guides (`docs/integrations/`):**
+   - `sms-guide.md`: Store management daily sales, inventory replenishment, and owner report workflows.
+   - `worker-app-guide.md`: Task manifest retrieval, SOP queries, and worker security boundaries.
+   - `peggy-guide.md`: 50-30-20 budgeting, expense breakdowns, receipt OCR, and non-banking rules.
+   - `ecommerce-guide.md`: Catalog queries, order tracking, and customer support escalation workflows.
+   - `sdk-quickstart.md`: Java, TypeScript, and MCP setup guide with copy-paste code snippets.
+
+8. **Operator Console Integrations Hub (`IntegrationsPage.tsx`):**
+   - 4-tab bilingual interface in English and Bahasa Indonesia (Connected Applications, Sandbox & Credentials, Live Gateway Probe, Client SDKs & MCP).
+   - Prominent visual banners for Strict Non-Banking Invariant and Worker Boundary Isolation.
+   - Interactive Live Gateway Probe running real HTTP health and catalog checks with formatted JSON payload inspection.
+   - Developer credentials table and cURL generator.
+
+## Phase 8 & Section 20.7 — Decision Intelligence and Optimization (Completed)
+
+1. **Database Schema & Route Seeding (`V10__phase8_decision_intelligence_and_optimization.sql`):**
+   - Created 3 normalized tables enforcing the complete decision governance lifecycle:
+     - `ai_decision_plans`: Central registry for optimization plans, domain archetypes (`DEBT_PAYOFF_STRATEGY`, `BUDGET_REBALANCING`, `SAVINGS_GOAL_ALLOCATION`, `DISPATCH_ROUTE_SCHEDULING`, `CUSTOM_OPTIMIZATION`), parameters JSON, hard/soft constraints JSON, freshness TTL (default 48h), and active status.
+     - `ai_decision_recommendations`: Consequential recommendations with title, summary, confidence score, abstention flags/reasons, simulation mode flag, review status (`PROPOSED`, `APPROVED`, `REJECTED`, `SUPERSEDED`, `EXECUTED_SIMULATION`), action type, evidence rationale JSON, trade-offs JSON, scenario diff JSON, constraints validated JSON, reviewer metadata, and source freshness timestamps.
+     - `ai_decision_feedbacks`: Telemetry tracking closed-loop outcome ratings (`HELPFUL`, `UNHELPFUL`, `OVERRIDDEN`, `REJECTED`), applied-to-production boolean, measured outcomes JSON, external user references, and qualitative comments.
+   - Seeded core routes and feature flags:
+     - Capability catalog: `decision_intelligence` (`task_code` = `decision_recommendation`).
+     - Feature flags: `decision.human_approval.required` (100%), `decision.simulation_mode.default` (100%).
+     - Reference plans: `peggy_debt_snowball_vs_avalanche` (Avalanche vs Snowball debt payoff optimizer with 24% credit card vs 12% personal loan vs 8% electronics installment and Rp 10.000.000 emergency fund floor), `peggy_savings_rebalance_optimizer` (60% emergency reserve floor weighting).
+
+2. **Deterministic Mathematical Optimization Engine (`DeterministicOptimizationEngine.java`):**
+   - Eliminates LLM numerical hallucinations by delegating financial math strictly to deterministic algorithms:
+     - **Debt Avalanche vs Snowball Optimizer:** Deterministic simulation computing exact amortization schedules, lifetime interest charges, debt-free timelines, and delta savings. Recommends Avalanche for mathematical savings (e.g. saving Rp 2.840.000 in interest and 12 months in time) while evaluating Snowball trade-offs (e.g. quick psychological win of closing low-balance installments in month 1).
+     - **Savings Goal & Sinking Fund Allocator:** Deterministically allocates monthly savings surplus into Emergency Reserves (priority 1) until target is reached before cascading to sinking funds (vehicle insurance, holiday trip).
+     - **Courier Route Dispatch Clustering:** K-means / nearest-neighbor heuristic clustering warehouse dispatch routes without external cloud leakage.
+
+3. **Hard & Soft Constraint Validation (`ConstraintValidator.java`):**
+   - Evaluates optimization candidates against domain rules:
+     - **Hard Constraints (Strict Abstention):** Critical boundaries such as `emergency_fund_floor` (minimum 3 months living expenses) and `emergency_priority_weight` (minimum 60% savings allocation). If breached, recommendations are blocked and the engine abstains.
+     - **Soft Constraints (Permissible Warnings):** Advisory boundaries such as `max_debt_repayment_ratio` (max 35% of net monthly income). Violations are logged as trade-offs without blocking simulation if soft violations are enabled.
+
+4. **Multi-Factor Abstention Safeguards (`AbstentionGuard.java`):**
+   - Evaluates three safety vectors before returning any recommendation:
+     - **Data Freshness TTL:** Rejects recommendations when underlying debt statements or bank balances exceed `freshness_ttl_hours` (e.g., older than 48–72 hours).
+     - **Confidence Score Floor:** Strict floor (≥ 0.65). If confidence is below threshold, the system abstains with `Confidence score below threshold` rather than delivering questionable financial advice.
+     - **Hard Constraint Breaches:** Immediate abstention if candidate metrics violate any hard floor.
+
+5. **Human Approval Workflow & State Machine (`DecisionIntelligenceService.java`):**
+   - Consequential recommendations enter a mandatory `PROPOSED` state.
+   - Operators inspect proposed actions in the Operator Console and transition them to `APPROVED`, `REJECTED`, or `EXECUTED_SIMULATION` with reviewer audit notes.
+   - Non-mutating simulation mode (`simulation_mode: true`) guarantees CRANIAL never modifies underlying money balances or issues unauthorized financial executions.
+
+6. **Closed-Loop Outcome Feedback & Benchmarking:**
+   - Closed-loop feedback mechanism (`submitFeedback`, `listFeedbacks`) records production adoption, overrides, and user sentiment.
+   - Built-in deterministic benchmark runner (`runBenchmarks`) executes 6 scenario test suites (Avalanche vs Snowball, Sinking Funds, Emergency Floor Violation, Stale Data TTL, Low Confidence Abstention) verifying 100% pass rate, 100% constraint satisfaction rate, 100% abstention accuracy, and sub-10ms latency.
+
+7. **Gateway & Admin Controllers (`DecisionGatewayController.java`, `AdminDecisionController.java`):**
+   - Client applications access decision intelligence at `/api/v1/decision/*` protected by capability entitlement check `@RequireCapability("decision_intelligence")` and tenant isolation.
+   - Operators manage plans, inspect review queues, approve recommendations, submit feedback, and execute benchmarks at `/api/admin/v1/decision/*` secured with `@PreAuthorize("hasAuthority('capability:manage')")`.
+
+8. **Bilingual Admin UI Console (`DecisionPage.tsx`, `AppShell.tsx`, `translations.ts`):**
+   - Integrated as a core navigation item (`nav.decision`: "Decisions & Optimization" / "Keputusan & Optimasi") with 5 dedicated sub-tabs:
+     - **Optimization & Scenarios:** Interactive simulation sandbox allowing operators to adjust monthly surplus budgets, run simulations, view Before vs After scenario diffs, and inspect trade-off comparisons.
+     - **Human Approval Queue:** Table of pending consequential recommendations with review modal (Approve, Reject, Execute in Simulation, Reviewer Notes).
+     - **Outcome & Feedback:** Telemetry dashboard and rating submission form (HELPFUL, UNHELPFUL, OVERRIDDEN, REJECTED).
+     - **Constraint & Abstention Rules:** Educational cards explaining hard emergency floors, soft debt ratios, and freshness TTLs.
+     - **Deterministic Benchmarks:** 1-click solver benchmark test runner displaying real-time pass rates and latency metrics.
+
+## Phase 9 & Section 20.9 — Customer Intelligence (Completed)
+
+1. **Database Schema & Route Seeding (`V11__phase9_customer_intelligence.sql`):**
+   - Created 4 normalized tables enforcing customer inquiry triage, privacy sanitization, human escalation handoff, and regression evaluations:
+     - `ai_customer_tickets`: Central ticket register tracking customer identity, channel, locale (`en`, `id`), subject, sanitized inquiry message, detected sentiment (`CustomerSentiment`), urgency level (`CustomerUrgency`), priority (`CustomerPriority`), ticket category (`TicketCategory`), routing queue (`RoutingQueue`), PII detection count, promise violation flag, canned response draft, and status (`NEW`, `ASSIGNED`, `IN_PROGRESS`, `ESCALATED`, `RESOLVED`, `CLOSED`).
+     - `ai_customer_escalations`: Human agent handoff queue tracking escalating ticket reference, escalation reason (`EscalationReason`), status (`PENDING_AGENT`, `IN_REVIEW`, `RESOLVED`, `REJECTED`), executive summary, customer friction indicators JSON, recommended next steps JSON, resolution notes, and resolving operator metadata.
+     - `ai_customer_reviews`: Customer feedback and app store review archive with star rating (1-5), language, sentiment polarity score (-1.0 to +1.0), extracted aspect tags JSON, key friction points JSON, and praise points JSON.
+     - `ai_customer_eval_cases`: Golden evaluation benchmark repository pre-seeded with 10 bilingual (English & Indonesian) ground-truth test cases spanning sentiment detection, categorization, urgency grading, promise safety boundaries, and human escalation triggers.
+
+2. **Multilingual Sentiment Analysis & Urgency Scoring (`CustomerSentimentEngine.java`):**
+   - Pure local-first deterministic engine supporting English and Bahasa Indonesia with zero external AI provider costs.
+   - Bilingual Sentiment Polarity Lexicon:
+     - Positive lexicons (EN: *excellent, love, great, helpful, fast, clear, intuitive, accurate, amazing*; ID: *bagus, suka, hebat, membantu, cepat, jelas, mudah, akurat, keren, mantap, puas*).
+     - Negative lexicons (EN: *bad, hate, terrible, useless, broken, error, bug, slow, confusing, crash, frustrating, angry*; ID: *buruk, benci, jelek, rusak, lambat, bingung, kecewa, gagal, emosi, payah, kesal*).
+     - Polarity score calculated in `[-1.0, +1.0]` mapping to `POSITIVE` (> 0.20), `NEUTRAL` ([-0.20, 0.20]), and `NEGATIVE` (< -0.20).
+   - Bilingual Urgency Scoring (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`):
+     - Critical urgency triggers: immediate demands (EN: *urgent, immediately, emergency, as soon as possible, asap, critical*; ID: *sekarang, segera, darurat, secepatnya, kritis, detik ini, penting sekali*).
+   - Aspect Extraction:
+     - Categorizes feedback across key money management product facets: `BUDGETING` (pos anggaran, envelope, limit), `OCR_RECEIPTS` (struk, scan, camera, extract), `PRIVACY_SECURITY` (keamanan, password, pin, breach), `PERFORMANCE_SPEED` (lag, freeze, loading), `UI_UX` (tampilan, layout, warna), and `COLLABORATION` (shared ledger, family budget).
+
+3. **PII Sanitization & Privacy Guard (`CustomerPrivacyGuard.java`):**
+   - High-precision regex-based masking protecting personal identifiable data before persistence or model inference:
+     - Indonesian NIK (Nomor Induk Kependudukan): 16-digit national ID pattern `\b[1-9]\d{15}\b` masked as `[REDACTED_NIK]`.
+     - Credit & Debit Cards: 13 to 19 digit primary account numbers `\b(?:\d{4}[ -]?){3,4}\d{1,4}\b` masked as `[REDACTED_CARD]`.
+     - Email Addresses: Standard RFC 5322 pattern masked as `[REDACTED_EMAIL]`.
+     - Phone Numbers: Indonesian (`+62` / `08xx`) and E.164 international numbers masked as `[REDACTED_PHONE]`.
+   - Returns sanitized text, entity counts, and classified entity views with zero data leakage.
+
+4. **Non-Banking Promise Guard Boundary (`CustomerPromiseGuard.java`):**
+   - Strictly enforces CRANIAL's non-negotiable architectural invariant: **CRANIAL and Peggy are purely money management and financial tracking platforms, NOT banking applications**.
+   - Intercepts and flags unsupported banking promises:
+     - Refund guarantees (EN: *promise refund, guarantee money back, return my cash*; ID: *janji kembalikan uang, jamin uang kembali, jaminan refund*).
+     - Bank transfers & payouts (EN: *transfer funds, send money to bank, disburse balance*; ID: *transfer saldo, kirim uang ke rekening, cairkan dana*).
+     - Direct cash settlements and chargebacks.
+   - Automatically injects legally compliant disclaimers:
+     - English: *"Disclaimer: This application is purely a money management and financial tracking tool. We do not process banking transactions, direct payments, fund transfers, or cash refunds."*
+     - Indonesian: *"Pemberitahuan: Aplikasi ini murni alat manajemen keuangan dan pencatatan anggaran. Kami tidak memproses transaksi perbankan, pembayaran langsung, transfer dana, atau pengembalian uang tunai."*
+   - Escalates promise trap tickets immediately to `BILLING_DISPUTE_QUEUE` or `CRITICAL_SAFETY_QUEUE` with highest priority.
+
+5. **Customer Ticket Triage & Queue Routing (`CustomerTriageEngine.java`):**
+   - Categorizes tickets into 9 structured categories: `ACCOUNT_SECURITY`, `BUDGETING_ADVICE`, `EXPENSE_TRACKING`, `GENERAL_INQUIRY`, `OCR_ISSUE`, `POLICY_QUESTION`, `PROMISE_SAFETY_VIOLATION`, `TECHNICAL_BUG`, `UNSUPPORTED_BANKING`.
+   - Priority Calculation (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`):
+     - Weighted composite score evaluating sentiment negativity, urgency level, safety flags, and escalation keywords.
+   - Dispatch to 5 specialized routing queues:
+     - `CRITICAL_SAFETY_QUEUE`: Promise safety traps and security violations.
+     - `FINANCIAL_COACHING_QUEUE`: Budgeting advice, 50-30-20 rules, savings pockets.
+     - `BILLING_DISPUTE_QUEUE`: Subscription or billing policy questions.
+     - `TECHNICAL_SUPPORT_QUEUE`: OCR extraction failures, crashes, sync bugs.
+     - `GENERAL_SUPPORT_QUEUE`: General usability inquiries.
+   - Grounded Canned Responses:
+     - Produces grounded, helpful pre-drafted canned responses in the customer's native locale (EN/ID), ready for human operator review or instant dispatch.
+
+6. **Human Escalation Handoff & Admin Resolution Workflow (`CustomerIntelligenceService.java`):**
+   - Automatically evaluates escalation criteria:
+     - Low customer sentiment (< -0.40) coupled with high urgency.
+     - Explicit escalation requests (EN: *human agent, speak to manager, real person*; ID: *bicara dengan manusia, hubungkan ke operator, agen manusia*).
+     - Promise safety violations or unsupported banking requests.
+   - Constructs a structured `EscalationHandoffPackage`:
+     - Executive summary for quick operator onboarding.
+     - Friction indicators (sentiment score, urgency score, customer name, source channel).
+     - Recommended actions checklist (e.g. clarify non-banking terms, guide on manual receipt adjustments).
+   - Provides operator resolution workflow (`resolveEscalation`) recording resolving operator email, resolution notes, and transitioning ticket/escalation state to `RESOLVED`.
+
+7. **Customer Review Summarization & Product Discovery Orchestration:**
+   - Review Summarizer (`summarizeReviews`):
+     - Aggregates multi-review batches into overall sentiment score, distribution count, positive aspects, key friction points, and direct quote excerpts.
+   - Product & Feature Discovery (`discoverProducts`):
+     - Inquires customer goals (e.g. debt payoff, family envelope budgeting, receipt bookkeeping) and returns tailored recommendations for Peggy, SMS, or Worker App features with match confidence and rationale—strictly preserving money management boundaries.
+
+8. **Deterministic Golden Benchmark Suite (`CustomerBenchmarkResult`):**
+   - Built-in regression test suite running all 10 ground-truth test cases in `ai_customer_eval_cases`:
+     - Verifies sentiment classification accuracy, ticket categorization accuracy, promise safety detection rate, and escalation trigger accuracy.
+     - Asserts 100% promise safety rate (0% false negatives on banking promise violations), >90% precision, and sub-15ms processing latency.
+
+9. **Gateway & Admin Controllers (`CustomerGatewayController.java`, `AdminCustomerController.java`):**
+   - Application gateway endpoints at `/api/v1/customer/*` secured with `@RequireCapability("customer_intelligence")`, `X-Cranial-Api-Key`, and multi-tenant isolation.
+     - `POST /api/v1/customer/sentiment/analyze`: On-the-fly sentiment and aspect scoring with PII masking.
+     - `POST /api/v1/customer/ticket/triage`: Full automated triage and canned response pipeline.
+     - `POST /api/v1/customer/reviews/summarize`: Batch feedback summarization with quotes.
+     - `POST /api/v1/customer/products/discover`: Goal-based feature discovery.
+   - Admin management endpoints at `/api/admin/v1/customer/*` secured with `@PreAuthorize("hasAuthority('app:read')")` and `hasAuthority('app:write')`.
+     - `GET /api/admin/v1/customer/tickets`: Filterable ticket inspection.
+     - `GET /api/admin/v1/customer/escalations`: Pending escalation queue.
+     - `POST /api/admin/v1/customer/escalations/{id}/resolve`: Operator resolution handler.
+     - `POST /api/admin/v1/customer/benchmarks/run`: 1-click regression benchmark runner.
+
+10. **Bilingual Admin UI Console (`CustomerPage.tsx`, `AppShell.tsx`, `translations.ts`):**
+    - Registered as top-level navigation item (`nav.customer`: "Customer Intelligence" / "Intelijen Pelanggan") with 4 interactive sub-tabs:
+      - **Live Triage & Sentiment:** Interactive simulator with 4 quick sample loaders (Budget Advice, Promise Trap, User Frustration, Feature Suggestion), live PII masking breakdown, sentiment meter, urgency badge, routing queue tag, and grounded canned response editor.
+      - **Human Escalation Queue:** High-priority escalation queue table with friction indicator pills, executive summary modal, and operator resolution workflow.
+      - **Reviews & Feature Discovery:** Dual-pane workbench supporting batch app review summarization with sentiment distribution and customer goal-based product recommendation matcher.
+      - **Regression Benchmarks:** 1-click golden dataset benchmark runner visualizing precision, recall, safety compliance rate, and benchmark execution latency.
+
+## Phase 10 — Application Integrations, Client SDKs & MCP Readiness (Completed)
+
+This phase establishes the client integration layer, multi-application adapters, official developer SDKs, Model Context Protocol (MCP) server, and strict security isolation.
+
+1. **SMS (Store Management System) Business Assistant Integration:**
+   - Owner and store operations business assistant powered by read-only deterministic tools (`sms_get_daily_sales`, `sms_get_low_stock_items`).
+   - Summarizes gross sales, order volume, payment breakdowns, low-stock inventory alerts, and replenishment reorder recommendations.
+   - Context claims isolation bound to tenant `sms_store_001` and user `sms_owner_001` with `STORE_OWNER` role.
+
+2. **Worker App Integration with Strict Access Boundaries:**
+   - Logistics, warehousing, and task execution assistant powered by read-only worker tools (`worker_get_assigned_tasks`, `worker_get_delivery_manifest`).
+   - Cryptographically signed worker context claims bound to tenant `sms_store_001` and user `worker_field_001` with `WORKER` role.
+   - **Strict Security Boundary Enforced:** Worker role attempting to query owner financial reports (`sms:owner_reports`) is immediately blocked by role-based scope checks with `ACCESS_DENIED` HTTP 403.
+
+3. **Peggy Personal Money Management (Strictly Non-Banking Invariant):**
+   - Personal budgeting, 50-30-20 category breakdown, monthly spending insights, and receipt OCR previews (`peggy_get_budget_breakdown`, `peggy_get_monthly_spending`).
+   - Context claims bound to tenant `peggy_household_001` and user `peggy_user_001` with `BUDGET_USER` role.
+   - **Invariant Enforcement:** CRANIAL and Peggy are strictly an educational and money management system—**never a banking application**. Any tool invocation containing banking or funds transfer verbs (`payment`, `transfer`, `disburse`, `withdraw`, `bank_wire`, `execute_transaction`) is intercepted immediately at the orchestrator boundary and rejected with `TOOL_PERMISSION_DENIED` HTTP 403.
+
+4. **E-Commerce Customer Support Assistant:**
+   - Real-time customer inquiry assistant with catalog and fulfillment tools (`ecom_get_product_info`, `ecom_get_order_status`).
+   - Supports customer queries on product specifications, stock availability, carrier tracking numbers, delivery ETA, and return policy information.
+   - Context claims bound to tenant `ecommerce_tenant_001` and user `ecom_cust_001` with `CUSTOMER` role.
+
+5. **Diagnostic Gateway & Sandbox Infrastructure:**
+   - `GET /api/v1/integration/health`: Unsigned diagnostic health probe exempt from signed-context requirement for fast liveness checks.
+   - `POST /api/v1/integration/echo`: HMAC-SHA256 signature and context claims verification handshake endpoint.
+   - `GET /api/v1/integration/catalog`: Application-scoped tool discovery endpoint listing available tools, parameters, and description metadata.
+   - `GET /api/admin/v1/integrations/summary` & `GET /api/admin/v1/integrations/sandbox`: Admin console endpoints for developer credentials and connection parameters.
+   - `ApplicationSandboxBootstrapService`: Automatic bootstrapping of predictable DEV sandbox credentials across all 4 applications.
+
+6. **Official Client SDKs & Model Context Protocol (MCP) Server:**
+   - **Java SDK (`sdk/java/`):** Maven library `io.cranial:cranial-client-sdk:0.1.0` with `CranialClient`, `SignedContext`, HMAC-SHA256 signer, thread-safe HTTP client, and unit test suite (100% passed).
+   - **TypeScript SDK (`sdk/typescript/`):** Typed Node.js package `@cranial/client:0.1.0` with crypto-native HMAC signer, typed orchestration methods, and diagnostic probes.
+   - **MCP Server (`sdk/mcp/cranial-mcp-server.js`):** Standardized JSON-RPC 2.0 stdio Model Context Protocol server enabling Claude Desktop, Antigravity, and Cursor to discover CRANIAL tools and run orchestrations.
+
+7. **Comprehensive Integration Guides (`docs/integrations/`):**
+   - `sms-guide.md`: Store management daily sales, inventory replenishment, and owner report workflows.
+   - `worker-app-guide.md`: Task manifest retrieval, SOP queries, and worker security boundaries.
+   - `peggy-guide.md`: 50-30-20 budgeting, expense breakdowns, receipt OCR, and non-banking rules.
+   - `ecommerce-guide.md`: Catalog queries, order tracking, and customer support escalation workflows.
+   - `sdk-quickstart.md`: Java, TypeScript, and MCP setup guide with copy-paste code snippets.
+
+8. **Operator Console Integrations Hub (`IntegrationsPage.tsx`):**
+   - 4-tab bilingual interface in English and Bahasa Indonesia (Connected Applications, Sandbox & Credentials, Live Gateway Probe, Client SDKs & MCP).
+   - Prominent visual banners for Strict Non-Banking Invariant and Worker Boundary Isolation.
+   - Interactive Live Gateway Probe running real HTTP health and catalog checks with formatted JSON payload inspection.
+   - Developer credentials table and cURL generator.
+
+## Section 20.9 — Indonesian Slang & Colloquial Spelling Normalization (Completed)
+
+This feature expands Customer Intelligence (`io.cranial.platform.customer`) with a deterministic, local-first Bahasa Indonesia slang, chat abbreviation, colloquial `-in` verb suffix, and expressive character-elongation normalization pipeline—strictly enforcing CRANIAL and Peggy's non-banking money management boundaries.
+
+1. **Database Schema & Golden Benchmark Migration (`V14__customer_slang_normalization.sql`):**
+   - Extended `ai_customer_tickets` with `normalized_message` (`TEXT`), `slang_normalized` (`BOOLEAN`), and `slang_replacements_json` (`TEXT`) so operators can audit raw, PII-redacted, and canonical normalized text side by side.
+   - Extended `ai_customer_reviews` with `normalized_review` (`TEXT`) and `slang_normalized` (`BOOLEAN`) for normalized app store feedback analytics.
+   - Created `ai_customer_slang_lexicon` (`id`, `slang_term`, `canonical_form`, `category`, `locale`, `is_banking_boundary_hint`, `explanation`, `is_active`, `created_at`, `updated_at`) allowing platform operators to govern custom colloquial terms dynamically at runtime without code redeployment, pre-seeded with 8 money-management and support colloquialisms (*nyangkut*, *mental sendiri*, *ga sinkron*, *boncos*, *jebol*, *struk burem*, *balikin saldo*, *tf balik*).
+   - Seeded 4 new `[ID-SLANG]` golden evaluation cases into `ai_customer_eval_cases` testing colloquial refund traps (*balikin duit gw skrg ke rek BCA*), app sluggishness + escalation (*lemot bgt parah, struk ga kebaca, sambungin ke cs manusia skrg jg!*), calm login assistance (*gak bisa login ke akun peggy, lupa pw*), and informal cancellation inquiries (*batalin catetan pengeluaran kemaren gimana caranya*).
+
+2. **Deterministic Multi-Pass Normalization Engine (`CustomerSlangNormalizer.java`):**
+   - Zero external LLM latency or cloud data leakage; executes locally in sub-millisecond time across 5 ordered passes:
+     - **Pass 1 — Privacy Mask Shielding:** Protects `CustomerPrivacyGuard` redaction spans (`[EMAIL: ...]`, `[CARD: ...]`, `[NIK: ...]`, `[PHONE: ...]`, `[REDACTED...]`) behind lossless placeholders before lexical rewriting so masked PII tokens are never altered.
+     - **Pass 2 — Expressive Character-Elongation Collapsing:** Collapses 3+ repeated expressive chat letters (*lemooottt* → *lemot*, *bgtttt* → *bgt*, *parahhh* → *parah*, *bisaaa* → *bisa*) while preserving numerals, currency amounts, and uppercase acronyms.
+     - **Pass 3 — Custom Operator Lexicon Pass (`ai_customer_slang_lexicon`):** Applies active database-backed operator dictionary overrides sorted longest-phrase-first with word-boundary safety.
+     - **Pass 4 — Curated Multi-Word Colloquial Phrase Rules:** Normalizes high-signal Indonesian support phrases including *balikin duit* / *minta duit balik* → *kembalikan uang*, *tf ke rek* / *tf saldo ke rek* → *transfer saldo ke rekening*, *cairin saldo* → *tarik tunai otomatis*, *gak bisa login* / *gabisa login* → *tidak bisa login*, *lupa pw* → *lupa password*, *lemot bgt* → *lambat sekali*, *keluar sendiri* → *force close*, *struk ga kebaca* → *struk rusak error*, *sambungin ke cs* / *bicara sm orang* → *bicara dengan agen manusia*, and IDR shorthand (*5jt* → *Rp 5.000.000*, *250rb* → *Rp 250.000*).
+     - **Pass 5 — Single-Token `-in` Suffixes & Chat Shorthand:** Normalizes colloquial `-in` verbs (*batalin* / *cancelin* → *batalkan*, *balikin* → *kembalikan*, *benerin* → *perbaiki*, *hapusin* → *hapus*, *tambahin* → *tambahkan*, *jelasin* → *jelaskan*, *aktifin* → *aktifkan*, *matiin* → *nonaktifkan*, *cairin* → *cairkan*, *bayarin* → *bayarkan*) and everyday chat shorthand (*gw/gue/aku* → *saya*, *udh* → *sudah*, *blm* → *belum*, *yg* → *yang*, *krn* → *karena*, *tp* → *tetapi*, *skrg* → *sekarang*, *bgt* → *sekali*, *duit* → *uang*, *rek* → *rekening*).
+
+3. **Strict Non-Banking Boundary & Pipeline Integration (`CustomerPromiseGuard.java`, `CustomerSentimentEngine.java`, `CustomerTriageEngine.java`, `CustomerIntelligenceService.java`):**
+   - Integrated `CustomerSlangNormalizer` directly after `CustomerPrivacyGuard` across `analyzeSentiment`, `triageTicket`, `summarizeReviews`, `discoverProducts`, and `runBenchmarks`.
+   - **Non-Banking Invariant Enforcement:** Colloquial refund, disbursement, payment, or bank transfer demands (*balikin duit*, *tf ke rek*, *cairin saldo*, *bayarin tagihan*, *tarik tunai*) set `bankingBoundaryHintDetected = true`, trigger `CustomerPromiseGuard` (`UNSUPPORTED_REFUND_PROMISE` / `UNSUPPORTED_BANKING_ACTION`), route to `POLICY_AND_COMPLIANCE` (`CRITICAL` priority, `ESCALATED`), and attach the mandatory Indonesian/English non-banking money management disclaimer clarifying CRANIAL/Peggy only records budgets and ledgers and never executes payments, transfers, or refunds.
+   - Expanded `CustomerBenchmarkResult` with dedicated `slangNormalizationAccuracy` scoring across `[ID-SLANG]` golden evaluation cases.
+
+4. **Gateway, Admin API & Bilingual Operator Workbench (`CustomerGatewayController.java`, `AdminCustomerController.java`, `CustomerPage.tsx`, `translations.ts`):**
+   - Added `POST /api/v1/customer/slang/normalize` (application gateway) and `POST /api/admin/v1/customer/slang/normalize`, `GET /api/admin/v1/customer/slang/lexicon`, `POST /api/admin/v1/customer/slang/lexicon`, `DELETE /api/admin/v1/customer/slang/lexicon/{id}` (admin governance API with `AuditService` logging).
+   - Enhanced `CustomerPage.tsx` with a 5th sub-tab (**Slang & Spelling Normalizer** / **Normalisasi Slang & Ejaan**) featuring 4 realistic Indonesian colloquial presets (*Refund Slang Trap*, *Slow App + Login Fail*, *Calm Login Help*, *Cancel Entry (-in)*), side-by-side PII-redacted vs canonical normalized diff cards, token replacement badges, non-banking boundary alert banners, full Custom Slang Lexicon CRUD table + category filter, normalized output preview inside **Live Triage & Sentiment**, and an **ID Slang Accuracy** KPI card inside **Regression Benchmarks**.
+
+## Section 20.12 — Admin Dashboard UI/UX & Operator Experience (Completed)
+
+This section implements Section 20.12 Admin dashboard UI/UX enhancements, delivering a production-grade, accessible, and resilient control console for platform operators.
+
+1. **Global Search Command Palette (`GlobalSearchModal.tsx`):**
+   - Universal command palette triggered anywhere via `Cmd+K` / `Ctrl+K` or the header search trigger.
+   - Real-time instant indexing and fuzzy filtering across:
+     - Navigation tabs (`Platform Overview`, `Applications & Keys`, `AI Orchestration & Schemas`, `Documents & OCR`, `Knowledge & RAG`, `Data & Analytics`, `Decisions & Optimization`, etc.).
+     - Registered client applications (`Peggy`, `SMS`, `Worker App`, `E-commerce`).
+     - Models and runtimes (`Ollama`, `vLLM`, `Qwen 2.5 Coder`, `Llama 3.1`).
+     - Capability workflows, prompts, schema contracts, and document pipelines.
+   - Category filtering pills (`ALL`, `Tabs`, `Applications`, `Models & AI`, `Orchestration`, `Documents`).
+   - Accessible keyboard interactions: `↑`/`↓` selection navigation, `Enter` to jump, `Esc` to dismiss.
+
+2. **Keyboard Shortcut Navigation & Cheatsheet (`KeyboardShortcutsModal.tsx`):**
+   - Quick cheatsheet modal accessible via `?` key or header button.
+   - Primary tab jumping using numeric keys `1` to `9` (when not focused on form inputs/textareas).
+   - Strict Money Management boundary documentation visible directly inside shortcut guidance, reiterating non-banking scope (no wire transfers or cash disbursements).
+
+3. **One-Click Signed-Context Test Snippet Generator (`SignedContextSnippetGenerator.tsx`):**
+   - Interactive developer snippet generator embedded in `ApplicationsPage.tsx`.
+   - Produces copyable, production-ready code with complete `HMAC-SHA256` request signing headers:
+     - **cURL:** Shell script calculating epoch timestamp and Base64 HMAC signature via `openssl dgst -sha256 -hmac`.
+     - **Java 21:** Modern `java.net.http.HttpClient` client using `javax.crypto.Mac` and multi-line text blocks.
+     - **TypeScript:** Node.js / Browser compatible fetch implementation using `node:crypto` `createHmac`.
+   - Real-time dropdown selection of application credentials, target capabilities, and tenant isolation scopes.
+
+4. **Copyable Correlation-ID Toast Notifications (`ToastContext.tsx`):**
+   - Global notification provider with success, error, warning, and info toast variants.
+   - Built-in 1-click correlation ID copy button on error and operational toasts for instant troubleshooting in audit logs.
+
+5. **Chronological Step Execution Timeline (`OrchestrationPage.tsx`):**
+   - Visual step execution timeline in the Orchestration traces inspector.
+   - Chronological ladder showing step sequence numbers, step names (`PROMPT_RENDER`, `MODEL_INFERENCE`, `TOOL_INVOCATION`, `SCHEMA_VALIDATION`), execution durations in milliseconds, and status badges.
+   - Proportional horizontal latency bars showing relative latency distribution across workflow steps.
+   - Expandable formatted JSON payloads for step inputs, tool parameters, and model outputs.
+
+6. **Prompt Version Diff & Template Inspector (`OrchestrationPage.tsx`):**
+   - Versioned prompt template inspector in the Prompts tab.
+   - Displays side-by-side system template and user template definitions.
+   - Highlights interpolated variables (`{{variable}}`) with monospace badges.
+   - One-click prompt publishing workflow for draft templates.
+
+7. **Live Schema Validator Playground (`OrchestrationPage.tsx`):**
+   - Interactive schema validation playground with live syntax checking.
+   - Real-time keystroke JSON syntax parser reporting key counts, character length, or exact syntax error location.
+   - Schema contract preview rendering strict/lenient mode, versioning, and required properties.
+
+8. **Readable Error Explanations & Operator Guidance (`ErrorExplanationBanner.tsx`):**
+   - Domain-specific error translation layer mapping raw platform codes (`TOOL_PERMISSION_DENIED`, `PROVIDER_CIRCUIT_OPEN`, `MISSING_SIGNED_CONTEXT`, `CONTEXT_TIMESTAMP_EXPIRED`, `RATE_LIMIT_EXCEEDED`, `UNSUPPORTED_BANKING_PROMISE`, `DOCUMENT_LOW_CONFIDENCE`, `SCHEMA_VALIDATION_FAILED`, etc.) into:
+     - Clear, non-technical explanation of what occurred.
+     - Root cause analysis explaining the underlying failure mechanism.
+     - Actionable operator guidance suggesting concrete remediation steps.
+     - One-click correlation ID copier and retry action trigger.
+
+9. **Model Health Indicators & Last-Checked Timestamps (`OverviewPage.tsx`, `ModelsPage.tsx`):**
+   - Real-time status heartbeat badges (`HEALTHY`, `DEGRADED`, `CIRCUIT_OPEN`) for Ollama local provider, vLLM engine, and document OCR pipeline.
+   - Latency diagnostics in milliseconds and human-readable last-checked timestamps.
+   - Strict enforcement indicator for Cloud Fallback Circuit Breaker (locked to `CIRCUIT_OPEN` under local-first governance).
+
+10. **Platform Quota & Capacity Visualization (`OverviewPage.tsx`):**
+    - Multi-metric progress bars for Daily Request Quota, Peak Cluster RPM, Vector Store Storage, and Tenant Isolation Allocation.
+    - Dynamic color-coded thresholds: green (< 70%), amber (70-90%), and rose (> 90%).
+
+11. **Responsive Layouts for Smaller Screens (`AppShell.tsx`):**
+    - Mobile sticky header with branding, quick search pill, keyboard shortcuts button, and hamburger toggle.
+    - Accessible slide-out navigation drawer with backdrop blur overlay and keyboard dismissal.
+
+12. **Universal Design System States & Focus Indicators:**
+    - Standardized `EmptyState.tsx`, `LoadingState.tsx`, `PermissionDeniedState.tsx`, and `StatusBadge.tsx` across modules.
+    - Clear `focus-visible:ring-2 focus-visible:ring-indigo-400` focus outlines for keyboard navigation accessibility.
+
+---
+
+# Part III: Product Backlog & Improvements (Section 20)
+
+This backlog is intentionally broad. It includes major capabilities, smaller features, security, reliability, performance, developer experience, admin UX, and integration improvements. Items are recommendations, not a requirement to implement all of them immediately.
+
+Update status as work progresses. Move completed items to `# Part II: Implemented Features` with detailed explanations. Add new ideas when discovered. Prioritize based on dependencies, risk, user value, and measurable benefit.
+
+**Status legend:** `[ ]` Not started · `[~]` In progress · `[x]` Completed · `[-]` Deferred / rejected
+
+## 20.1 Foundation and architecture
+
+- [ ] Add distributed lock (`ShedLock` or Redis lock) for multi-replica scheduled maintenance coordination.
+- [ ] Add OpenTelemetry distributed tracing context propagation (`traceparent`, `tracestate`) across HTTP gateway and background tasks.
+- [ ] Add automated database schema migration drift verification against Docker PostgreSQL in CI.
+- [ ] Add key-version tagging on `AES-256-GCM` encrypted secrets to support zero-downtime master encryption key rotation.
+
+## 20.2 Model and provider management
+
+*(Completed items moved to `# Part II: Implemented Features -> Section 20.2 Model and Provider Management Improvements` with detailed explanations.)*
+
+- [ ] Add local model download/setup guidance in the admin panel.
+- [ ] Add model version and configuration history.
+- [ ] Add model deprecation and replacement workflows.
+- [ ] Add provider timeout and circuit-breaker configuration via Admin UI.
+- [ ] Add model benchmark runs using a fixed evaluation dataset.
+- [ ] Add model comparison reports for quality, speed, and resource use.
+- [ ] Add dynamic token budget negotiation based on prompt complexity and model context window.
+- [ ] Add model warm-pool scheduler keeping frequently used local models resident in VRAM based on usage patterns.
+- [ ] Add automatic model fallthrough retry on transient HTTP 5xx or connection resets.
+- [ ] Add live token generation speed counter (tokens/sec) to Model Playground streaming display.
+- [ ] Add multi-turn conversation simulator to Model Playground.
+- [ ] Add optional hosted-provider adapters behind explicit opt-in policies.
+- [ ] Add alert threshold notifications when host CPU/RAM or GPU VRAM utilization exceeds 90% for prolonged periods.
+- [ ] Add Apple Silicon Metal / MPS Unified Memory telemetry probe for macOS developer deployments.
+
+## 20.3 Orchestration and workflow improvements
+
+- [ ] Add multi-step iterative tool execution loop (ReAct / reflection loop) with configurable maximum iteration count.
+- [ ] Add prompt differential comparison (diff viewer) in Admin UI between prompt versions.
+- [ ] Add prompt A/B testing canary distribution across integration task executions.
+- [ ] Add tool response caching with configurable TTL for idempotent read-only tool calls.
+- [ ] Add synthetic benchmark evaluation runner for prompt regression testing against fixed datasets.
+- [ ] Add workflow cancellation and safe compensation patterns.
+- [ ] Add human approval checkpoints.
+- [ ] Add confidence thresholds and abstention behavior.
+- [ ] Add explicit uncertainty and missing-information representation.
+- [ ] Add prompt-injection test cases for tool-using workflows.
+- [ ] Add duplicate-request detection for long-running workflows.
+
+## 20.4 Document intelligence and OCR
+
+*(Completed items moved to `# Part II: Implemented Features -> Phase 5 & Section 20.4 — Document Intelligence and OCR`.)*
+
+- [ ] Add support for handwritten text only if a suitable model and evaluation set justify it.
+- [ ] Add S3-compatible / Supabase Storage encrypted blob backend adapter alongside local disk `DocumentStorageService` for multi-node deployments.
+- [ ] Add interactive bounding-box visual overlay on scanned receipt/invoice previews in `DocumentsPage.tsx` using word-level TSV coordinates from Tesseract.
+- [ ] Add signed outbound webhook notifications (`X-Cranial-Webhook-Signature`) when asynchronous multi-page document jobs transition to `COMPLETED`, `PARTIAL_SUCCESS`, or `PENDING_REVIEW`.
+- [ ] Add CSV / JSON export endpoint for extracted document tables and receipt line-item batches (strictly read-only export for money-management import).
+- [ ] Add adaptive Sauvola local thresholding option in `ImagePreprocessor` for uneven shadow illumination on mobile camera captures.
+- [ ] Add ClamAV daemon (`INSTREAM`) optional malware scanner hook inside `DocumentSecurityValidator` for high-compliance deployments.
+
+## 20.5 Knowledge intelligence and RAG
+
+*(Completed items moved to `# Part II: Implemented Features -> Phase 6 & Section 20.5 — Knowledge Intelligence and RAG` with detailed explanations.)*
+
+- [ ] Add local cross-encoder neural reranker adapter (e.g. `bge-reranker-base` via ONNX runtime or Python sidecar) as a secondary fine-grained reranking stage for top-50 candidate pools.
+- [ ] Add Reciprocal Rank Fusion (RRF) formula support (`RRF_score = 1 / (60 + rank)`) alongside weighted linear combination for merging BM25 and vector score ranks.
+- [ ] Add Contextual Retrieval chunk enrichment (Anthropic contextual embedding pattern) that prepends document context summaries and section hierarchies directly into chunk text before embedding.
+- [ ] Add interactive PDF page deep-linking viewer in `KnowledgePage.tsx` allowing operators to click any `[Page N]` citation and open the high-resolution source document page view directly.
+- [ ] Add Indonesian morphological lemmatizer / Nazief-Adriani stemmer plugin to the BM25 lexical analyzer for improved Indonesian root-word matching (*membiayai*, *pembiayaan* → *biaya*).
+- [ ] Add multi-query decomposition agent capable of breaking down complex multi-condition analytical queries into atomic sub-questions before querying knowledge collections.
+- [ ] Add scheduled CRON trigger for automated feed connector polling in background maintenance worker (`PlatformMaintenanceService`).
+- [ ] Add exportable evaluation benchmark reports (Markdown and CSV) tracking Hit Rate@K, MRR, and citation accuracy trends across releases.
+
 ## 20.6 Data intelligence and analytics
 
-*(Completed items moved to `# Implemented Features -> Phase 7 & Section 20.6 — Data Intelligence and Analytics` with detailed explanations.)*
+*(Completed items moved to `# Part II: Implemented Features -> Phase 7 & Section 20.6 — Data Intelligence and Analytics` with detailed explanations.)*
 
 - [ ] Add automated seasonal decomposition (Loess/STL) to isolate recurring weekend/end-of-month spending cycles from true irregular outliers in household budgets.
 - [ ] Add Monte Carlo cash flow simulation (10,000 iterations) projecting 6-month emergency fund longevity under variable income/expense distributions.
@@ -1927,10 +2470,10 @@ Update status as work progresses. Move completed items to `# Implemented Feature
 
 ## 20.7 Decision intelligence and optimization
 
-*(Completed items moved to `# Implemented Features -> Phase 8 & Section 20.7 â Decision Intelligence and Optimization` with detailed explanations.)*
+*(Completed items moved to `# Part II: Implemented Features -> Phase 8 & Section 20.7 — Decision Intelligence and Optimization` with detailed explanations.)*
 
 - [ ] Add linear programming / simplex solver integration (e.g. Apache Commons Math / OR-Tools JNI) for complex multi-asset household portfolio rebalancing under tax and liquidity constraints.
-- [ ] Add dynamic sensitivity analysis matrix in `DecisionPage.tsx` showing how recommendation outcomes vary across interest rate fluctuations (Â±1% to Â±5%) and income shocks.
+- [ ] Add dynamic sensitivity analysis matrix in `DecisionPage.tsx` showing how recommendation outcomes vary across interest rate fluctuations (±1% to ±5%) and income shocks.
 - [ ] Add multi-party collaborative approval workflow requiring dual-operator sign-off (two-man rule) for high-value financial recommendations.
 - [ ] Add historical recommendation override analytics tracking the most frequently altered optimization parameters to suggest automatic constraint tuning.
 - [ ] Add exportable PDF/Markdown decision memo generator summarizing baseline scenario, mathematical evidence, trade-offs, and reviewer signatures.
@@ -1939,28 +2482,23 @@ Update status as work progresses. Move completed items to `# Implemented Feature
 
 ## 20.8 Conversational intelligence
 
-- [ ] Add conversation title generation.
-- [ ] Add conversation summaries for long sessions.
-- [ ] Add configurable context-window management.
-- [ ] Add conversation export and deletion.
-- [ ] Add conversation retention policies per application.
-- [ ] Add feedback controls for helpfulness and correctness.
-- [ ] Add source references in assistant responses.
-- [ ] Add structured UI response blocks for supported client applications.
-- [ ] Add clarification-question workflows.
-- [x] Add multilingual behavior and locale preferences (English & Bahasa Indonesia).
-- [ ] Add per-application default locale configuration in application_settings.
-- [ ] Add Indonesian slang and currency colloquialism normalization (e.g. 'ceban', 'gocap', 'paslon', 'rebu') for Indonesian money management queries.
-- [ ] Add locale-sensitive number and date formatting (IDR Rp 1.000.000,00 vs USD $1,000.00).
-- [ ] Add safe handling of unsupported questions.
-- [ ] Add user-visible indicators when data is unavailable or uncertain.
-- [ ] Add conversation-level permission revalidation before each tool call.
+*(Completed items moved to `# Part II: Implemented Features -> Phase 4 & Section 20.8 — Conversational Intelligence` with detailed explanations.)*
+
+- [ ] Add Server-Sent Events (SSE) token-by-token streaming response endpoint (`/api/v1/conversations/{id}/messages/stream`) for real-time assistant typing.
+- [ ] Add local speech-to-text audio input pipeline via Whisper / whisper.cpp for mobile voice transaction logging in Peggy.
+- [ ] Add multimodal image receipt attachment support within active conversation turns to trigger embedded OCR inline.
+- [ ] Add dynamic customer frustration and sentiment trend tracking across multi-turn sessions with automated supervisor notification.
+- [ ] Add multi-party collaborative split-expense group conversation simulator for Peggy household budgeting.
+- [ ] Add automated conversation topic clustering and recurrent financial question trend reports in Admin Console.
+- [ ] Add per-tool permission revalidation before each dynamic tool call invocation.
 
 ## 20.9 Customer intelligence
 
-*(Completed items moved to `# Implemented Features -> Phase 9 & Section 20.9 — Customer Intelligence` with detailed explanations.)*
+*(Completed items moved to `# Part II: Implemented Features -> Phase 9 & Section 20.9 — Customer Intelligence` and `Section 20.9 — Indonesian Slang & Colloquial Spelling Normalization` with detailed explanations.)*
 
-- [ ] Add Indonesian slang and colloquial spelling normalization for customer support chats (e.g. *batalin*, *balikin duit*, *lemot bgt*, *gak bisa login*).
+- [ ] Add regional Indonesian dialect and conversational particle normalization (Javanese/Sundanese/Medan/Makassar particles such as *kok*, *dong*, *deh*, *sih*, *mah*, *atuh*, *rek*) to further reduce false-negative intent classification in regional chats.
+- [ ] Add bounded Levenshtein / Jaro-Winkler typo-tolerance pre-pass (edit distance ≤ 1) on high-value Indonesian financial tracking nouns (*anggran* → *anggaran*, *pengluaran* → *pengeluaran*, *kntong* → *kantong*) before lexical triage.
+- [ ] Add bulk CSV/JSON import and export workflow for `ai_customer_slang_lexicon` entries in `CustomerPage.tsx` with dry-run conflict preview.
 - [ ] Add automated CSAT (Customer Satisfaction) post-resolution feedback survey webhook trigger (`event: ticket.resolved`).
 - [ ] Add duplicate customer ticket deduplication engine using Jaccard similarity and customer fingerprint to merge rapid repeated submissions.
 - [ ] Add SLA countdown timer and automated escalation warning webhook for unassigned critical tickets nearing the 15-minute breach threshold.
@@ -2013,23 +2551,15 @@ Update status as work progresses. Move completed items to `# Implemented Feature
 
 ## 20.12 Admin dashboard UI/UX
 
-- [ ] Add global search for applications, requests, jobs, documents, and models.
-- [ ] Add filters by application, tenant, capability, provider, status, and date.
-- [ ] Add request detail timeline with model and tool execution steps.
-- [ ] Add readable error explanations and suggested operator actions.
-- [ ] Add model health indicators with last-checked timestamps.
-- [ ] Add one-click signed-context test snippet generator (cURL / Java / TypeScript) in the Admin UI application detail panel.
-- [ ] Add copyable correlation-ID toast notifications and keyboard shortcut navigation in the Admin UI.
-- [ ] Add prompt editor with version comparison.
-- [ ] Add schema editor with live validation.
-- [ ] Add document extraction viewer with source/page context.
-- [ ] Add RAG retrieval inspector.
-- [ ] Add usage and quota visualization.
-- [ ] Add responsive layouts for smaller screens.
-- [ ] Add accessible keyboard navigation and clear focus states.
-- [ ] Add empty, loading, partial, failed, and permission-denied states.
-- [ ] Add consistent status labels and filters across modules.
-- [ ] Add dashboard customization only if it does not compromise usability.
+*(Completed items moved to `# Part II: Implemented Features -> Section 20.12 Admin Dashboard UI/UX & Operator Experience` with detailed explanations.)*
+
+- [ ] Add dark/light theme toggle with persistent operator preference in `localStorage`.
+- [ ] Add WebSocket live execution trace stream in `OrchestrationPage.tsx` for real-time model token generation monitoring.
+- [ ] Add exportable PDF/CSV summary report generator for platform audit logs and security events in `AuditLogsPage.tsx`.
+- [ ] Add WebAuthn / FIDO2 hardware security key MFA support for Super Admin console login.
+- [ ] Add interactive bounding-box annotation canvas in `DocumentsPage.tsx` for visual OCR correction.
+- [ ] Add customizable operator overview widget grid with drag-and-drop rearrangement.
+- [ ] Enforce strict zero-unused-locals TypeScript build gate (`tsc -b --noEmit`) across all legacy Admin Console tabs in CI.
 
 ## 20.13 Developer experience and integrations
 
@@ -2089,6 +2619,10 @@ These are larger ideas to assess after the foundation is stable:
 - [ ] **Privacy-Preserving Context Gateway:** Minimize, redact, and classify context before it is passed to any model.
 - [ ] **Cross-Application Capability Catalog:** Discover which applications can use which shared capabilities without sharing their private data.
 - [ ] **Feedback-to-Improvement Pipeline:** Convert reviewed corrections and user feedback into governed evaluation datasets—not automatic uncontrolled model training.
+
+---
+
+# Part IV: Governance, Prioritization & Principles
 
 ---
 

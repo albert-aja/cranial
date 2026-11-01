@@ -15,6 +15,9 @@ public record TicketTriageResult(
         @JsonProperty("sentiment_score") double sentimentScore,
         @JsonProperty("routing_queue") RoutingQueue routingQueue,
         @JsonProperty("redacted_message") String redactedMessage,
+        @JsonProperty("normalized_message") String normalizedMessage,
+        @JsonProperty("slang_normalized") boolean slangNormalized,
+        @JsonProperty("slang_replacements") List<CustomerSlangReplacementView> slangReplacements,
         @JsonProperty("pii_detected") boolean piiDetected,
         @JsonProperty("pii_entities") List<PiiEntityView> piiEntities,
         @JsonProperty("promise_guard_flagged") boolean promiseGuardFlagged,
@@ -25,4 +28,3 @@ public record TicketTriageResult(
         @JsonProperty("escalation_reason") EscalationReason escalationReason,
         @JsonProperty("escalation_package") EscalationHandoffPackage escalationPackage
 ) {}
-

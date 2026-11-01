@@ -37,6 +37,15 @@ public class CustomerTicketEntity {
     @TableField("redacted_message")
     private String redactedMessage;
 
+    @TableField("normalized_message")
+    private String normalizedMessage;
+
+    @TableField("slang_normalized")
+    private Boolean slangNormalized;
+
+    @TableField("slang_replacements_json")
+    private String slangReplacementsJson;
+
     @TableField("pii_detected")
     private Boolean piiDetected;
 
@@ -111,6 +120,15 @@ public class CustomerTicketEntity {
 
     public String getRedactedMessage() { return redactedMessage; }
     public void setRedactedMessage(String redactedMessage) { this.redactedMessage = redactedMessage; }
+
+    public String getNormalizedMessage() { return normalizedMessage; }
+    public void setNormalizedMessage(String normalizedMessage) { this.normalizedMessage = normalizedMessage; }
+
+    public Boolean getSlangNormalized() { return slangNormalized; }
+    public void setSlangNormalized(Boolean slangNormalized) { this.slangNormalized = slangNormalized; }
+
+    public String getSlangReplacementsJson() { return slangReplacementsJson; }
+    public void setSlangReplacementsJson(String slangReplacementsJson) { this.slangReplacementsJson = slangReplacementsJson; }
 
     public Boolean getPiiDetected() { return piiDetected; }
     public void setPiiDetected(Boolean piiDetected) { this.piiDetected = piiDetected; }

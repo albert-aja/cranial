@@ -21,7 +21,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/v1/customer")
-@Tag(name = "Admin Customer Intelligence Console", description = "Administration of support ticket triage, human escalation handoff queue, eval benchmarks, and customer sentiment analytics")
+@Tag(name = "Admin Customer Intelligence Console", description = "Administration of support ticket triage, Indonesian slang & colloquial spelling normalization, human escalation handoff queue, eval benchmarks, and customer sentiment analytics")
 @SecurityRequirement(name = OpenApiConfig.SCHEME_ADMIN_JWT)
 public class AdminCustomerController {
 
@@ -29,6 +29,77 @@ public class AdminCustomerController {
 
     public AdminCustomerController(CustomerIntelligenceService customerService) {
         this.customerService = customerService;
+    }
+
+    @PostMapping("/slang/normalize")
+    @PreAuthorize("hasAuthority('app:read')")
+    @Operation(summary = "Normalize Indonesian slang and colloquial spellings in customer support chat")
+    public ApiResponse<CustomerSlangNormalizeResult> normalizeSupportChat(
+            @Valid @RequestBody CustomerSlangNormalizeRequest request
+    ) {
+        return ApiResponse.ok(customerService.normalizeSupportChat(request));
+    }
+
+    @GetMapping("/slang/lexicon")
+    @PreAuthorize("hasAuthority('app:read')")
+    @Operation(summary = "List built-in and custom Indonesian customer support slang lexicon rules")
+    public ApiResponse<List<CustomerSlangLexiconView>> listSlangLexicon(
+            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "search", required = false) String search
+    ) {
+        return ApiResponse.ok(customerService.listSlangLexicon(category, search));
+    }
+
+    @PostMapping("/slang/lexicon")
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAuthority('app:write')")
+    @Operation(summary = "Create or update a governed custom Indonesian slang normalization rule")
+    public ApiResponse<CustomerSlangLexiconView> saveSlangLexiconEntry(
+            @AuthenticationPrincipal AdminPrincipal admin,
+            @Valid @RequestBody CustomerSlangLexiconRequest request
+    ) {
+        String actor = admin != null ? admin.email() : "operator";
+        return ApiResponse.ok(customerService.saveSlangLexiconEntry(request, actor));
+    }
+
+    @DeleteMapping("/slang/lexicon/{id}")
+    @PreAuthorize("hasAuthority('app:write')")
+    @Operation(summary = "Delete a custom Indonesian slang normalization rule")
+    public ApiResponse<Map<String, Object>> deleteSlangLexiconEntry(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal AdminPrincipal admin
+    ) {
+        String actor = admin != null ? admin.email() : "operator";
+        customerService.deleteSlangLexiconEntry(id, actor);
+        return ApiResponse.ok(Map.of("id", id.toString(), "deleted", true));
+    }
+
+    @PostMapping("/sentiment/analyze")
+    @PreAuthorize("hasAuthority('app:read')")
+    @Operation(summary = "Operator console simulator for sentiment analysis, PII masking, and slang normalization")
+    public ApiResponse<SentimentAnalysisResult> analyzeSentiment(@Valid @RequestBody SentimentAnalysisRequest request) {
+        return ApiResponse.ok(customerService.analyzeSentiment(request, null, null, true));
+    }
+
+    @PostMapping("/tickets/triage")
+    @PreAuthorize("hasAuthority('app:read')")
+    @Operation(summary = "Operator console simulator for support ticket triage, slang normalization, and promise safety")
+    public ApiResponse<TicketTriageResult> triageTicket(@Valid @RequestBody TicketTriageRequest request) {
+        return ApiResponse.ok(customerService.triageTicket(request, null, null, true, "admin_console"));
+    }
+
+    @PostMapping("/reviews/summarize")
+    @PreAuthorize("hasAuthority('app:read')")
+    @Operation(summary = "Operator console simulator for customer review summarization")
+    public ApiResponse<ReviewSummaryResult> summarizeReviews(@Valid @RequestBody ReviewSummarizeRequest request) {
+        return ApiResponse.ok(customerService.summarizeReviews(request, null, null, true));
+    }
+
+    @PostMapping("/products/discover")
+    @PreAuthorize("hasAuthority('app:read')")
+    @Operation(summary = "Operator console simulator for non-banking money management feature discovery")
+    public ApiResponse<ProductDiscoveryResult> discoverProducts(@Valid @RequestBody ProductDiscoveryRequest request) {
+        return ApiResponse.ok(customerService.discoverProducts(request, null, null, true));
     }
 
     @GetMapping("/tickets")
@@ -77,7 +148,7 @@ public class AdminCustomerController {
 
     @PostMapping("/benchmarks/run")
     @PreAuthorize("hasAuthority('app:read')")
-    @Operation(summary = "Execute Customer Intelligence regression benchmark suite (sentiment, classification, promise safety, escalation)")
+    @Operation(summary = "Execute Customer Intelligence regression benchmark suite (sentiment, classification, promise safety, escalation, slang normalization)")
     public ApiResponse<CustomerBenchmarkResult> runBenchmarks() {
         return ApiResponse.ok(customerService.runEvaluationBenchmarks());
     }
@@ -90,4 +161,3 @@ public class AdminCustomerController {
         return ApiResponse.ok(customerService.createEvalCase(request));
     }
 }
-

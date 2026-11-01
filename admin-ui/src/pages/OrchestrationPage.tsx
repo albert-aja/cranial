@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { api } from '../api/client';
 import type {
   TaskDefinitionView,
@@ -10,6 +10,9 @@ import type {
   ToolExecutionResult,
 } from '../api/types';
 import { StatusBadge } from '../components/StatusBadge';
+import { ErrorExplanationBanner } from '../components/ErrorExplanationBanner';
+import { LoadingState } from '../components/LoadingState';
+import { EmptyState } from '../components/EmptyState';
 
 type Tab = 'tasks' | 'prompts' | 'schemas' | 'tools' | 'traces';
 
@@ -25,9 +28,14 @@ export default function OrchestrationPage() {
   const [tools, setTools] = useState<ToolView[]>([]);
   const [traces, setTraces] = useState<OrchestratorTraceView[]>([]);
 
+  // Prompt Version Diff State
+  const [selectedPromptForDiff, setSelectedPromptForDiff] = useState<PromptView | null>(null);
+
   // Schema Validator Playground State
   const [selectedSchemaId, setSelectedSchemaId] = useState<string>('');
-  const [testPayloadJson, setTestPayloadJson] = useState<string>('{\n  "status": "COMPLETED",\n  "summary": "Monthly balance is within normal limits.",\n  "recommended_action": "Set aside $150 to emergency savings."\n}');
+  const [testPayloadJson, setTestPayloadJson] = useState<string>(
+    '{\n  "status": "COMPLETED",\n  "summary": "Monthly balance is within normal limits.",\n  "recommended_action": "Set aside $150 to emergency savings."\n}'
+  );
   const [valLoading, setValLoading] = useState(false);
   const [valResult, setValResult] = useState<SchemaValidationResult | null>(null);
 
@@ -37,8 +45,10 @@ export default function OrchestrationPage() {
   const [toolLoading, setToolLoading] = useState(false);
   const [toolResult, setToolResult] = useState<ToolExecutionResult | null>(null);
 
-  // Trace Inspector State
+  // Trace Inspector State & Filters
   const [inspectingTrace, setInspectingTrace] = useState<OrchestratorTraceView | null>(null);
+  const [traceSearch, setTraceSearch] = useState('');
+  const [traceStatusFilter, setTraceStatusFilter] = useState('');
 
   // New Prompt Modal State
   const [showPromptModal, setShowPromptModal] = useState(false);
@@ -55,6 +65,28 @@ export default function OrchestrationPage() {
     input_variables_json: '["inputData"]',
   });
 
+  // Live JSON Syntax Check for Schema Editor
+  const payloadSyntax = useMemo(() => {
+    try {
+      const parsed = JSON.parse(testPayloadJson);
+      const isObj = typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed);
+      const keyCount = isObj ? Object.keys(parsed).length : 0;
+      return {
+        valid: true,
+        error: null,
+        keyCount,
+        chars: testPayloadJson.length,
+      };
+    } catch (e) {
+      return {
+        valid: false,
+        error: e instanceof Error ? e.message : 'Invalid JSON syntax',
+        keyCount: 0,
+        chars: testPayloadJson.length,
+      };
+    }
+  }, [testPayloadJson]);
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -68,7 +100,12 @@ export default function OrchestrationPage() {
       ]);
 
       if (tRes.status === 'ok') setTasks(tRes.data);
-      if (pRes.status === 'ok') setPrompts(pRes.data);
+      if (pRes.status === 'ok') {
+        setPrompts(pRes.data);
+        if (pRes.data.length > 0 && !selectedPromptForDiff) {
+          setSelectedPromptForDiff(pRes.data[0]);
+        }
+      }
       if (sRes.status === 'ok') {
         setSchemas(sRes.data);
         if (sRes.data.length > 0 && !selectedSchemaId) {
@@ -115,7 +152,7 @@ export default function OrchestrationPage() {
       let parsed = {};
       try {
         parsed = JSON.parse(testPayloadJson);
-      } catch (e) {
+      } catch {
         alert('Payload is not valid JSON');
         setValLoading(false);
         return;
@@ -142,7 +179,7 @@ export default function OrchestrationPage() {
       let params = {};
       try {
         params = JSON.parse(toolParamsJson);
-      } catch (e) {
+      } catch {
         alert('Parameters are not valid JSON');
         setToolLoading(false);
         return;
@@ -177,6 +214,23 @@ export default function OrchestrationPage() {
     }
   };
 
+  // Filtered Traces
+  const filteredTraces = useMemo(() => {
+    return traces.filter((tr) => {
+      const matchesStatus = !traceStatusFilter || tr.status === traceStatusFilter;
+      const q = traceSearch.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        tr.id.toLowerCase().includes(q) ||
+        tr.task_code.toLowerCase().includes(q) ||
+        (tr.model_identifier && tr.model_identifier.toLowerCase().includes(q)) ||
+        (tr.prompt_code && tr.prompt_code.toLowerCase().includes(q));
+      return matchesStatus && matchesSearch;
+    });
+  }, [traces, traceStatusFilter, traceSearch]);
+
+  const selectedSchema = schemas.find((s) => s.id === selectedSchemaId);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -196,8 +250,9 @@ export default function OrchestrationPage() {
         </div>
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => loadData()}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700 flex items-center gap-1.5 transition-colors"
+            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700 flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -205,8 +260,9 @@ export default function OrchestrationPage() {
             Refresh
           </button>
           <button
+            type="button"
             onClick={() => setShowPromptModal(true)}
-            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-teal-600 hover:bg-teal-500 text-white shadow-sm transition-colors flex items-center gap-1.5"
+            className="px-3 py-1.5 text-xs font-medium rounded-lg bg-teal-600 hover:bg-teal-500 text-white shadow-sm transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -217,20 +273,21 @@ export default function OrchestrationPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-800 space-x-1">
+      <div className="flex border-b border-slate-800 space-x-1 overflow-x-auto">
         {(
           [
             { id: 'tasks', label: 'Tasks', count: tasks.length },
-            { id: 'prompts', label: 'Prompts', count: prompts.length },
-            { id: 'schemas', label: 'Schemas & Validator', count: schemas.length },
+            { id: 'prompts', label: 'Prompts & Diff', count: prompts.length },
+            { id: 'schemas', label: 'Schemas & Live Validator', count: schemas.length },
             { id: 'tools', label: 'Safe Tools', count: tools.length },
             { id: 'traces', label: 'Execution Traces', count: traces.length },
           ] as const
         ).map((tab) => (
           <button
             key={tab.id}
+            type="button"
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 flex items-center gap-2 ${
+            className={`px-4 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 flex items-center gap-2 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 ${
               activeTab === tab.id
                 ? 'border-teal-500 text-teal-400 bg-slate-800/40'
                 : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/20'
@@ -245,12 +302,11 @@ export default function OrchestrationPage() {
       </div>
 
       {error && (
-        <div className="p-3 text-xs rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-center gap-2">
-          <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          {error}
-        </div>
+        <ErrorExplanationBanner
+          errorCode="ORCHESTRATION_LOAD_FAILED"
+          errorMessage={error}
+          onRetry={loadData}
+        />
       )}
 
       {/* Strict Money Management Boundary Banner for Tools */}
@@ -267,10 +323,7 @@ export default function OrchestrationPage() {
 
       {/* Tab Content */}
       {loading ? (
-        <div className="flex items-center justify-center p-12 text-slate-400 text-sm">
-          <div className="animate-spin rounded-full h-5 w-5 border-2 border-teal-500 border-t-transparent mr-2" />
-          Loading orchestration registry...
-        </div>
+        <LoadingState message="Loading orchestration registry..." />
       ) : (
         <>
           {/* TAB 1: TASKS */}
@@ -299,11 +352,13 @@ export default function OrchestrationPage() {
                         <td className="py-3 px-4 text-cyan-400">{t.default_prompt_code || '—'}</td>
                         <td className="py-3 px-4 text-purple-400">{t.output_schema_code || '—'}</td>
                         <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-sans ${
-                            t.allowed_data_sensitivity === 'RESTRICTED'
-                              ? 'bg-rose-500/10 text-rose-300 border border-rose-500/20'
-                              : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
-                          }`}>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-sans ${
+                              t.allowed_data_sensitivity === 'RESTRICTED'
+                                ? 'bg-rose-500/10 text-rose-300 border border-rose-500/20'
+                                : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                            }`}
+                          >
                             {t.allowed_data_sensitivity}
                           </span>
                         </td>
@@ -319,70 +374,127 @@ export default function OrchestrationPage() {
             </div>
           )}
 
-          {/* TAB 2: PROMPTS */}
+          {/* TAB 2: PROMPTS WITH VERSION COMPARISON */}
           {activeTab === 'prompts' && (
-            <div className="space-y-4">
-              <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300">
-                    <thead className="bg-slate-800/80 text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-800">
-                      <tr>
-                        <th className="py-3 px-4">Prompt Code</th>
-                        <th className="py-3 px-4">Name</th>
-                        <th className="py-3 px-4">Version</th>
-                        <th className="py-3 px-4">Capability</th>
-                        <th className="py-3 px-4">Variables</th>
-                        <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                      {prompts.map((p) => (
-                        <tr key={p.id} className="hover:bg-slate-800/30 transition-colors">
-                          <td className="py-3 px-4 font-mono font-semibold text-teal-400">{p.prompt_code}</td>
-                          <td className="py-3 px-4 text-slate-200 font-medium">
-                            {p.name}
-                            {p.description && <p className="text-[11px] text-slate-400 font-normal">{p.description}</p>}
-                          </td>
-                          <td className="py-3 px-4 font-mono text-cyan-400">v{p.version}</td>
-                          <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">{p.capability_code}</td>
-                          <td className="py-3 px-4">
-                            <div className="flex flex-wrap gap-1">
-                              {p.input_variables.map((v) => (
-                                <span key={v} className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-slate-300 border border-slate-700">
-                                  {`{{${v}}}`}
-                                </span>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="py-3 px-4">
-                            <StatusBadge label={p.status} />
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            {p.status === 'DRAFT' && (
-                              <button
-                                onClick={() => handlePublishPrompt(p.id)}
-                                className="px-2.5 py-1 text-[11px] font-medium rounded bg-teal-600 hover:bg-teal-500 text-white transition-colors"
-                              >
-                                Publish
-                              </button>
-                            )}
-                          </td>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Prompts Table */}
+                <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-300">
+                      <thead className="bg-slate-800/80 text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-800">
+                        <tr>
+                          <th className="py-3 px-4">Prompt Code</th>
+                          <th className="py-3 px-4">Name</th>
+                          <th className="py-3 px-4">Version</th>
+                          <th className="py-3 px-4">Status</th>
+                          <th className="py-3 px-4 text-right">Action</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/50">
+                        {prompts.map((p) => {
+                          const isSelected = selectedPromptForDiff?.id === p.id;
+                          return (
+                            <tr
+                              key={p.id}
+                              onClick={() => setSelectedPromptForDiff(p)}
+                              className={`cursor-pointer transition-colors ${
+                                isSelected ? 'bg-teal-900/20 border-l-2 border-teal-500' : 'hover:bg-slate-800/30'
+                              }`}
+                            >
+                              <td className="py-3 px-4 font-mono font-semibold text-teal-400">
+                                {p.prompt_code}
+                                <div className="text-[10px] text-slate-500">{p.capability_code}</div>
+                              </td>
+                              <td className="py-3 px-4 text-slate-200">
+                                <div className="font-medium">{p.name}</div>
+                                {p.description && <p className="text-[11px] text-slate-400 font-normal">{p.description}</p>}
+                              </td>
+                              <td className="py-3 px-4 font-mono text-cyan-400">v{p.version}</td>
+                              <td className="py-3 px-4">
+                                <StatusBadge label={p.status} />
+                              </td>
+                              <td className="py-3 px-4 text-right">
+                                {p.status === 'DRAFT' ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePublishPrompt(p.id);
+                                    }}
+                                    className="px-2.5 py-1 text-[11px] font-medium rounded bg-teal-600 hover:bg-teal-500 text-white transition-colors"
+                                  >
+                                    Publish
+                                  </button>
+                                ) : (
+                                  <span className="text-[11px] text-slate-500">Active</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Prompt Version Inspector & Diff */}
+                <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                      Prompt Inspector & Variables
+                    </h3>
+                    {selectedPromptForDiff && (
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-teal-500/10 text-teal-300 border border-teal-500/20">
+                        v{selectedPromptForDiff.version}
+                      </span>
+                    )}
+                  </div>
+
+                  {selectedPromptForDiff ? (
+                    <div className="space-y-3 text-xs">
+                      <div>
+                        <div className="text-slate-400 text-[11px] font-semibold mb-1">System Template:</div>
+                        <pre className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 font-mono text-[11px] whitespace-pre-wrap">
+                          {selectedPromptForDiff.system_template || '(None configured)'}
+                        </pre>
+                      </div>
+
+                      <div>
+                        <div className="text-slate-400 text-[11px] font-semibold mb-1">User Template:</div>
+                        <pre className="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-300 font-mono text-[11px] whitespace-pre-wrap">
+                          {selectedPromptForDiff.user_template}
+                        </pre>
+                      </div>
+
+                      <div>
+                        <div className="text-slate-400 text-[11px] font-semibold mb-1">Interpolated Variables:</div>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedPromptForDiff.input_variables.map((v) => (
+                            <span
+                              key={v}
+                              className="px-2 py-0.5 rounded bg-slate-800 text-teal-300 border border-slate-700 font-mono text-[10px]"
+                            >
+                              {`{{${v}}}`}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-slate-500">Select a prompt template to inspect details.</p>
+                  )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 3: SCHEMAS & VALIDATOR */}
+          {/* TAB 3: SCHEMAS & LIVE VALIDATOR */}
           {activeTab === 'schemas' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Schemas List */}
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-slate-200">Registered Schemas</h3>
+                <h3 className="text-sm font-semibold text-slate-200">Registered JSON Schemas</h3>
                 <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-sm">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs text-slate-300">
@@ -418,11 +530,39 @@ export default function OrchestrationPage() {
                     </table>
                   </div>
                 </div>
+
+                {/* Schema Definition Preview */}
+                {selectedSchema && (
+                  <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/60 space-y-2 text-xs">
+                    <div className="flex items-center justify-between text-slate-300 font-semibold">
+                      <span>Schema Contract: {selectedSchema.schema_code}</span>
+                      <span className="font-mono text-slate-500">v{selectedSchema.version}</span>
+                    </div>
+                    <pre className="p-2.5 rounded bg-slate-950 border border-slate-800 font-mono text-[11px] text-teal-300 overflow-x-auto max-h-48">
+                      {JSON.stringify(selectedSchema.schema_definition, null, 2)}
+                    </pre>
+                  </div>
+                )}
               </div>
 
-              {/* Schema Playground */}
+              {/* Schema Playground with Live Validation */}
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-slate-200">Interactive Schema Validator Playground</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-200">Interactive Live Schema Validator</h3>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-mono ${
+                        payloadSyntax.valid
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                      }`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${payloadSyntax.valid ? 'bg-emerald-400' : 'bg-rose-400'}`} />
+                      {payloadSyntax.valid ? `JSON Valid (${payloadSyntax.keyCount} keys)` : 'Syntax Error'}
+                    </span>
+                  </div>
+                </div>
+
                 <div className="p-4 rounded-xl border border-slate-800 bg-slate-900/60 space-y-3">
                   <div>
                     <label className="block text-xs font-medium text-slate-400 mb-1">Select Schema to Validate Against</label>
@@ -440,29 +580,38 @@ export default function OrchestrationPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Payload JSON (Simulate Model Output)</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-medium text-slate-400">Payload JSON (Simulate Model Output)</label>
+                      <span className="text-[10px] text-slate-500">{payloadSyntax.chars} chars</span>
+                    </div>
                     <textarea
-                      rows={6}
+                      rows={7}
                       value={testPayloadJson}
                       onChange={(e) => setTestPayloadJson(e.target.value)}
                       className="w-full text-xs font-mono bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-teal-500"
                     />
+                    {!payloadSyntax.valid && (
+                      <p className="mt-1 text-[11px] text-rose-400 font-mono">{payloadSyntax.error}</p>
+                    )}
                   </div>
 
                   <button
+                    type="button"
                     onClick={handleValidateSchema}
-                    disabled={valLoading}
-                    className="w-full py-2 text-xs font-medium rounded-lg bg-teal-600 hover:bg-teal-500 text-white transition-colors flex items-center justify-center gap-2"
+                    disabled={valLoading || !payloadSyntax.valid}
+                    className="w-full py-2 text-xs font-medium rounded-lg bg-teal-600 hover:bg-teal-500 disabled:opacity-50 text-white transition-colors flex items-center justify-center gap-2"
                   >
                     {valLoading ? 'Validating against schema...' : 'Validate Payload'}
                   </button>
 
                   {valResult && (
-                    <div className={`p-3 rounded-lg border text-xs ${
-                      valResult.valid
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-                        : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
-                    }`}>
+                    <div
+                      className={`p-3 rounded-lg border text-xs ${
+                        valResult.valid
+                          ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                          : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                      }`}
+                    >
                       <div className="font-semibold flex items-center gap-1.5">
                         {valResult.valid ? '✓ Schema Validation Passed' : '✗ Schema Validation Failed'}
                       </div>
@@ -480,7 +629,7 @@ export default function OrchestrationPage() {
             </div>
           )}
 
-          {/* TAB 4: TOOLS */}
+          {/* TAB 4: SAFE CONTROLLED TOOLS */}
           {activeTab === 'tools' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Tools List */}
@@ -559,6 +708,7 @@ export default function OrchestrationPage() {
                   </div>
 
                   <button
+                    type="button"
                     onClick={handleTestTool}
                     disabled={toolLoading}
                     className="w-full py-2 text-xs font-medium rounded-lg bg-teal-600 hover:bg-teal-500 text-white transition-colors flex items-center justify-center gap-2"
@@ -584,99 +734,200 @@ export default function OrchestrationPage() {
             </div>
           )}
 
-          {/* TAB 5: TRACES */}
+          {/* TAB 5: TRACES & VISUAL TIMELINE */}
           {activeTab === 'traces' && (
             <div className="space-y-4">
-              <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300">
-                    <thead className="bg-slate-800/80 text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-800">
-                      <tr>
-                        <th className="py-3 px-4">Trace ID</th>
-                        <th className="py-3 px-4">Task</th>
-                        <th className="py-3 px-4">Model</th>
-                        <th className="py-3 px-4">Prompt</th>
-                        <th className="py-3 px-4">Schema</th>
-                        <th className="py-3 px-4">Tokens</th>
-                        <th className="py-3 px-4">Duration</th>
-                        <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-4 text-right">Inspect</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50 font-mono">
-                      {traces.map((tr) => (
-                        <tr key={tr.id} className="hover:bg-slate-800/30 transition-colors">
-                          <td className="py-3 px-4 font-semibold text-teal-400 text-[11px]">
-                            {tr.id.substring(0, 8)}...
-                          </td>
-                          <td className="py-3 px-4 font-sans text-slate-200">{tr.task_code}</td>
-                          <td className="py-3 px-4 text-cyan-400">{tr.model_identifier || '—'}</td>
-                          <td className="py-3 px-4 text-slate-400">{tr.prompt_code || '—'}</td>
-                          <td className="py-3 px-4 text-purple-400">{tr.schema_code || '—'}</td>
-                          <td className="py-3 px-4 text-slate-400">{tr.total_tokens}</td>
-                          <td className="py-3 px-4 text-slate-400">{tr.total_duration_ms}ms</td>
-                          <td className="py-3 px-4 font-sans">
-                            <StatusBadge label={tr.status} />
-                          </td>
-                          <td className="py-3 px-4 text-right font-sans">
-                            <button
-                              onClick={() => setInspectingTrace(tr)}
-                              className="px-2.5 py-1 text-[11px] font-medium rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
-                            >
-                              Steps ({tr.steps ? tr.steps.length : 0})
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* Universal Trace Filter Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl border border-slate-800 bg-slate-900/60">
+                <div className="flex flex-wrap items-center gap-2 flex-1">
+                  <input
+                    type="text"
+                    value={traceSearch}
+                    onChange={(e) => setTraceSearch(e.target.value)}
+                    placeholder="Filter by trace ID, task code, model..."
+                    className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-white placeholder-slate-500 w-64"
+                  />
+                  <select
+                    value={traceStatusFilter}
+                    onChange={(e) => setTraceStatusFilter(e.target.value)}
+                    className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-white"
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="SUCCESS">SUCCESS</option>
+                    <option value="FAILED">FAILED</option>
+                    <option value="TIMEOUT">TIMEOUT</option>
+                    <option value="REJECTED">REJECTED</option>
+                  </select>
                 </div>
+                <div className="text-xs text-slate-400">{filteredTraces.length} traces found</div>
               </div>
 
-              {/* Trace Step Drawer / Modal */}
+              {filteredTraces.length === 0 ? (
+                <EmptyState
+                  title="No orchestration traces matching filters"
+                  message="Execute conversational, extraction, or data workflows to see step traces."
+                />
+              ) : (
+                <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs text-slate-300">
+                      <thead className="bg-slate-800/80 text-slate-400 uppercase tracking-wider text-[11px] border-b border-slate-800">
+                        <tr>
+                          <th className="py-3 px-4">Trace ID</th>
+                          <th className="py-3 px-4">Task</th>
+                          <th className="py-3 px-4">Model</th>
+                          <th className="py-3 px-4">Prompt</th>
+                          <th className="py-3 px-4">Schema</th>
+                          <th className="py-3 px-4">Tokens</th>
+                          <th className="py-3 px-4">Duration</th>
+                          <th className="py-3 px-4">Status</th>
+                          <th className="py-3 px-4 text-right">Inspect</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/50 font-mono">
+                        {filteredTraces.map((tr) => (
+                          <tr key={tr.id} className="hover:bg-slate-800/30 transition-colors">
+                            <td className="py-3 px-4 font-semibold text-teal-400 text-[11px]">
+                              {tr.id.substring(0, 8)}...
+                            </td>
+                            <td className="py-3 px-4 font-sans text-slate-200">{tr.task_code}</td>
+                            <td className="py-3 px-4 text-cyan-400">{tr.model_identifier || '—'}</td>
+                            <td className="py-3 px-4 text-slate-400">{tr.prompt_code || '—'}</td>
+                            <td className="py-3 px-4 text-purple-400">{tr.schema_code || '—'}</td>
+                            <td className="py-3 px-4 text-slate-400">{tr.total_tokens}</td>
+                            <td className="py-3 px-4 text-slate-400">{tr.total_duration_ms}ms</td>
+                            <td className="py-3 px-4 font-sans">
+                              <StatusBadge label={tr.status} />
+                            </td>
+                            <td className="py-3 px-4 text-right font-sans">
+                              <button
+                                type="button"
+                                onClick={() => setInspectingTrace(tr)}
+                                className="px-2.5 py-1 text-[11px] font-medium rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors border border-slate-700"
+                              >
+                                Timeline ({tr.steps ? tr.steps.length : 0})
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Visual Execution Step Timeline Modal */}
               {inspectingTrace && (
-                <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-                  <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full p-5 space-y-4 shadow-xl">
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Trace Step Timeline Inspector"
+                  className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm"
+                  onClick={() => setInspectingTrace(null)}
+                >
+                  <div
+                    className="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[85vh] flex flex-col"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                       <div>
-                        <h4 className="text-sm font-bold text-white">Execution Steps Inspector</h4>
-                        <p className="text-xs text-slate-400 font-mono">Trace ID: {inspectingTrace.id}</p>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-base font-bold text-white">Execution Step Timeline</h4>
+                          <StatusBadge label={inspectingTrace.status} />
+                        </div>
+                        <p className="text-xs text-slate-400 font-mono mt-0.5">Trace: {inspectingTrace.id}</p>
                       </div>
                       <button
+                        type="button"
                         onClick={() => setInspectingTrace(null)}
-                        className="text-slate-400 hover:text-white"
+                        className="text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800"
                       >
                         ✕
                       </button>
                     </div>
 
-                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {/* Error Banner if Trace Failed */}
+                    {inspectingTrace.status === 'FAILED' && (
+                      <ErrorExplanationBanner
+                        errorCode="ORCHESTRATOR_EXECUTION_FAILED"
+                        errorMessage={inspectingTrace.error_message || 'Workflow step failed or rejected'}
+                        correlationId={inspectingTrace.id}
+                      />
+                    )}
+
+                    {/* Timeline Summary Metrics */}
+                    <div className="grid grid-cols-3 gap-2 p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-xs">
+                      <div>
+                        <span className="text-slate-500">Total Duration:</span>
+                        <div className="font-mono font-semibold text-teal-400">{inspectingTrace.total_duration_ms}ms</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Tokens:</span>
+                        <div className="font-mono font-semibold text-slate-200">{inspectingTrace.total_tokens}</div>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Task Code:</span>
+                        <div className="font-mono font-semibold text-indigo-300">{inspectingTrace.task_code}</div>
+                      </div>
+                    </div>
+
+                    {/* Chronological Step Ladder */}
+                    <div className="space-y-3 overflow-y-auto flex-1 pr-1">
                       {inspectingTrace.steps && inspectingTrace.steps.length > 0 ? (
-                        inspectingTrace.steps.map((st) => (
-                          <div
-                            key={st.step}
-                            className="p-3 rounded-lg border border-slate-800 bg-slate-950 font-mono text-xs space-y-1.5"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-semibold text-teal-400">
-                                Step {st.step}: {st.name}
-                              </span>
-                              <span className={`px-2 py-0.5 rounded text-[10px] ${
-                                st.status === 'SUCCESS'
-                                  ? 'bg-emerald-500/10 text-emerald-300'
-                                  : 'bg-rose-500/10 text-rose-300'
-                              }`}>
-                                {st.status} ({st.duration_ms}ms)
-                              </span>
+                        inspectingTrace.steps.map((st, index) => {
+                          const maxDuration = Math.max(...inspectingTrace.steps.map((s) => s.duration_ms || 1), 1);
+                          const pct = Math.min(100, Math.max(10, Math.round(((st.duration_ms || 1) / maxDuration) * 100)));
+
+                          return (
+                            <div key={st.step || index} className="relative pl-6 pb-2 border-l-2 border-slate-800">
+                              {/* Timeline Node Dot */}
+                              <div
+                                className={`absolute -left-[9px] top-1 h-4 w-4 rounded-full border-2 border-slate-900 flex items-center justify-center text-[9px] font-bold ${
+                                  st.status === 'SUCCESS' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
+                                }`}
+                              >
+                                {st.step}
+                              </div>
+
+                              <div className="rounded-xl border border-slate-800 bg-slate-950/80 p-3 space-y-2">
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-bold text-slate-200">{st.name}</span>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono text-slate-400">{st.duration_ms}ms</span>
+                                    <span
+                                      className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${
+                                        st.status === 'SUCCESS'
+                                          ? 'bg-emerald-500/10 text-emerald-300'
+                                          : 'bg-rose-500/10 text-rose-300'
+                                      }`}
+                                    >
+                                      {st.status}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Latency Visual Bar */}
+                                <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all ${
+                                      st.status === 'SUCCESS' ? 'bg-teal-500' : 'bg-rose-500'
+                                    }`}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+
+                                {st.details && (
+                                  <pre className="text-slate-300 text-[10px] font-mono overflow-x-auto p-2 bg-slate-900/90 rounded border border-slate-800/60 max-h-32">
+                                    {JSON.stringify(st.details, null, 2)}
+                                  </pre>
+                                )}
+                              </div>
                             </div>
-                            <pre className="text-slate-300 text-[11px] overflow-x-auto p-2 bg-slate-900 rounded">
-                              {JSON.stringify(st.details, null, 2)}
-                            </pre>
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
-                        <div className="text-center p-4 text-xs text-slate-400 font-sans">
-                          No step data recorded for this trace.
+                        <div className="text-center p-6 text-xs text-slate-400">
+                          No step breakdown recorded for this trace.
                         </div>
                       )}
                     </div>
@@ -690,11 +941,26 @@ export default function OrchestrationPage() {
 
       {/* New Prompt Modal */}
       {showPromptModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-xl max-w-lg w-full p-5 space-y-4 shadow-xl">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Create New Prompt Template"
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm"
+          onClick={() => setShowPromptModal(false)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h4 className="text-sm font-bold text-white">Create New Prompt Template</h4>
-              <button onClick={() => setShowPromptModal(false)} className="text-slate-400 hover:text-white">✕</button>
+              <h4 className="text-base font-bold text-white">Create New Prompt Template</h4>
+              <button
+                type="button"
+                onClick={() => setShowPromptModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
             </div>
             <form onSubmit={handleSavePrompt} className="space-y-3 text-xs">
               <div>

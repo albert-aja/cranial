@@ -1457,6 +1457,58 @@ export interface PiiEntityItemView {
   end_offset: number;
 }
 
+export interface CustomerSlangReplacementItemView {
+  original_token: string;
+  canonical_token: string;
+  category: string;
+  banking_boundary_hint: boolean;
+  explanation: string;
+}
+
+export interface CustomerSlangNormalizeRequestPayload {
+  text: string;
+  locale?: string;
+  redact_pii?: boolean;
+}
+
+export interface CustomerSlangNormalizeResultView {
+  raw_text: string;
+  redacted_text: string;
+  normalized_text: string;
+  locale: string;
+  pii_detected: boolean;
+  pii_entities: PiiEntityItemView[];
+  slang_detected: boolean;
+  elongation_collapsed_count: number;
+  replacement_count: number;
+  replacements: CustomerSlangReplacementItemView[];
+  banking_boundary_hint_detected: boolean;
+  money_management_disclaimer?: string | null;
+}
+
+export interface CustomerSlangLexiconItemView {
+  id: string;
+  slang_term: string;
+  canonical_form: string;
+  category: string;
+  locale: string;
+  banking_boundary_hint: boolean;
+  explanation?: string | null;
+  source: 'CUSTOM_DB' | 'BUILT_IN' | string;
+  is_active: boolean;
+  updated_at: string;
+}
+
+export interface CustomerSlangLexiconRequestPayload {
+  slang_term: string;
+  canonical_form: string;
+  category?: string;
+  locale?: string;
+  banking_boundary_hint?: boolean;
+  explanation?: string;
+  is_active?: boolean;
+}
+
 export interface SentimentAnalysisRequestPayload {
   text: string;
   locale?: string;
@@ -1466,6 +1518,9 @@ export interface SentimentAnalysisRequestPayload {
 export interface SentimentAnalysisResultView {
   raw_text: string;
   redacted_text: string;
+  normalized_text: string;
+  slang_normalized: boolean;
+  slang_replacements: CustomerSlangReplacementItemView[];
   sentiment: CustomerSentimentType;
   score: number;
   confidence: number;
@@ -1507,6 +1562,9 @@ export interface TicketTriageResultView {
   sentiment_score: number;
   routing_queue: RoutingQueueType;
   redacted_message: string;
+  normalized_message: string;
+  slang_normalized: boolean;
+  slang_replacements: CustomerSlangReplacementItemView[];
   pii_detected: boolean;
   pii_entities: PiiEntityItemView[];
   promise_guard_flagged: boolean;
@@ -1527,6 +1585,9 @@ export interface CustomerTicketItemView {
   customer_name?: string | null;
   subject: string;
   redacted_message: string;
+  normalized_message: string;
+  slang_normalized: boolean;
+  slang_replacements: CustomerSlangReplacementItemView[];
   pii_detected: boolean;
   pii_entities: PiiEntityItemView[];
   locale: string;
@@ -1613,6 +1674,8 @@ export interface CustomerBenchmarkResultView {
   classification_f1_score: number;
   promise_guard_safety_rate_percent: number;
   escalation_precision_percent: number;
+  slang_cases_evaluated: number;
+  slang_normalization_accuracy_percent: number;
   suite_breakdowns: Record<string, number>;
   evaluation_details: Record<string, unknown>[];
   evaluated_at: string;
@@ -1654,140 +1717,141 @@ export interface SandboxCredentialInfo {
 
 
 
+// ==========================================
+// Conversational Intelligence Types (Phase 4 / 20.8)
+// ==========================================
 
-export interface TicketTriageRequestPayload {
-  customer_name?: string;
-  external_user_ref?: string;
-  subject: string;
-  message: string;
-  locale?: string;
-  source_channel?: string;
-}
+export type BlockType =
+  | 'TEXT'
+  | 'TABLE'
+  | 'ACTION_CARD'
+  | 'CHART_KPI'
+  | 'CLARIFICATION'
+  | 'FINANCIAL_DISCLAIMER';
 
-export interface TicketTriageResultView {
-  ticket_id: string;
-  ticket_number: string;
-  category: TicketCategoryType;
-  priority: CustomerPriorityType;
-  urgency: CustomerUrgencyType;
-  sentiment: CustomerSentimentType;
-  sentiment_score: number;
-  routing_queue: RoutingQueueType;
-  redacted_message: string;
-  pii_detected: boolean;
-  pii_entities: PiiEntityItemView[];
-  promise_guard_flagged: boolean;
-  promise_guard_reasons: string[];
-  suggested_canned_response: string;
-  confidence_score: number;
-  escalation_recommended: boolean;
-  escalation_reason?: EscalationReasonType | null;
-  escalation_package?: EscalationHandoffPackageView | null;
-}
-
-export interface CustomerTicketItemView {
+export interface ClarificationOptionView {
   id: string;
-  ticket_number: string;
-  application_id?: string | null;
-  tenant_id?: string | null;
-  external_user_ref?: string | null;
-  customer_name?: string | null;
-  subject: string;
-  redacted_message: string;
-  pii_detected: boolean;
-  pii_entities: PiiEntityItemView[];
+  label: string;
+  suggestedInput: string;
+  description: string;
+}
+
+export interface StructuredUiBlockView {
+  type: BlockType;
+  title?: string;
+  content?: string;
+  description?: string;
+  actionLabel?: string;
+  actionPayload?: string;
+  headers?: string[];
+  rows?: string[][];
+  options?: ClarificationOptionView[];
+  metricLabel?: string;
+  metricValue?: string;
+  metricTrend?: string;
+}
+
+export interface SourceReferenceView {
+  sourceId: string;
+  title: string;
+  uri: string;
+  snippet: string;
+  relevanceScore?: number;
+}
+
+export interface ConversationMessageView {
+  id: string;
+  conversationId: string;
+  role: 'SYSTEM' | 'USER' | 'ASSISTANT' | 'TOOL';
+  content: string;
+  rawContent?: string;
+  tokenCount: number;
+  structuredBlocks: StructuredUiBlockView[];
+  sourceReferences: SourceReferenceView[];
+  toolsInvoked: string[];
+  modelUsed?: string;
+  latencyMs?: number;
+  isSafetyViolation: boolean;
+  safetyReason?: string;
+  createdAt: string;
+}
+
+export interface ConversationFeedbackView {
+  id: string;
+  conversationId: string;
+  messageId?: string;
+  rating?: number;
+  isHelpful?: boolean;
+  isCorrect?: boolean;
+  feedbackCategory?: string;
+  comment?: string;
+  operatorId?: string;
+  createdAt: string;
+}
+
+export interface ConversationView {
+  id: string;
+  applicationId: string;
+  applicationName: string;
+  tenantId?: string;
+  userId: string;
+  title: string;
   locale: string;
-  category: TicketCategoryType;
-  sentiment: CustomerSentimentType;
-  sentiment_score: number;
-  urgency: CustomerUrgencyType;
-  priority: CustomerPriorityType;
-  routing_queue: RoutingQueueType;
-  status: TicketStatusType;
-  promise_guard_flagged: boolean;
-  promise_guard_reasons: string[];
-  suggested_canned_response: string;
-  confidence_score: number;
-  created_at: string;
-  updated_at: string;
+  status: 'ACTIVE' | 'ARCHIVED' | 'PURGED';
+  totalTurnCount: number;
+  totalTokensUsed: number;
+  contextSummary?: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface CustomerEscalationItemView {
+export interface ConversationDetailView {
+  conversation: ConversationView;
+  messages: ConversationMessageView[];
+  feedbacks: ConversationFeedbackView[];
+}
+
+export interface ConversationRetentionPolicyView {
   id: string;
-  ticket_id: string;
-  ticket_number: string;
-  customer_name?: string | null;
-  subject: string;
-  application_id?: string | null;
-  tenant_id?: string | null;
-  escalation_reason: EscalationReasonType;
-  executive_summary: string;
-  customer_sentiment_summary: string;
-  attempts_made?: string | null;
-  recommended_actions: string[];
-  status: EscalationStatusType;
-  assigned_agent?: string | null;
-  resolution_notes?: string | null;
-  resolved_at?: string | null;
-  created_at: string;
-  updated_at: string;
+  applicationId: string;
+  applicationName: string;
+  retentionDays: number;
+  autoPruneEnabled: boolean;
+  exportOnPrune: boolean;
+  defaultLocale: string;
+  enforceSafetyGuard: boolean;
+  maxContextTurns: number;
+  maxContextTokens: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface ReviewSummarizeRequestPayload {
-  reviews: string[];
-  locale?: string;
-  domain_context?: string;
-}
-
-export interface ReviewSummaryResultView {
-  total_analyzed: number;
-  overall_sentiment: CustomerSentimentType;
-  average_sentiment_score: number;
-  pros: string[];
-  cons: string[];
-  top_feature_requests: string[];
-  evidence_quotes: string[];
-  executive_summary: string;
-}
-
-export interface ProductDiscoveryRequestPayload {
-  customer_goal: string;
-  current_persona?: string;
-  locale?: string;
-}
-
-export interface RecommendedFeatureItemView {
-  feature_code: string;
-  feature_name: string;
+export interface NormalizedSlangTokenView {
+  originalToken: string;
+  normalizedToken: string;
   category: string;
-  match_score: number;
-  rationale: string;
-  trade_off_notes: string;
-  setup_guidance: string[];
+  explanation: string;
 }
 
-export interface ProductDiscoveryResultView {
-  customer_goal: string;
-  recommended_features: RecommendedFeatureItemView[];
-  money_management_boundary_disclaimer: string;
+export interface SlangNormalizeResultView {
+  originalText: string;
+  normalizedText: string;
+  hasSlangDetected: boolean;
+  replacementsCount: number;
+  tokensDetected: NormalizedSlangTokenView[];
 }
 
-export interface CustomerBenchmarkResultView {
-  total_evaluated: number;
-  passed_cases: number;
-  failed_cases: number;
-  sentiment_accuracy_percent: number;
-  classification_f1_score: number;
-  promise_guard_safety_rate_percent: number;
-  escalation_precision_percent: number;
-  suite_breakdowns: Record<string, number>;
-  evaluation_details: Record<string, unknown>[];
-  evaluated_at: string;
+export interface ConversationBenchmarkResultView {
+  totalConversations: number;
+  totalMessages: number;
+  averageLatencyMs: number;
+  averageTurnCount: number;
+  totalSafetyViolationsIntercepted: number;
+  totalSlangExpressionsNormalized: number;
+  positiveFeedbackCount: number;
+  negativeFeedbackCount: number;
+  satisfactionScore: number;
+  messagesByLocale: Record<string, number>;
+  conversationsByApp: Record<string, number>;
 }
-
-
-
-
-
-
-

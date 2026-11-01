@@ -15,6 +15,9 @@ public record CustomerTicketView(
         @JsonProperty("customer_name") String customerName,
         @JsonProperty("subject") String subject,
         @JsonProperty("redacted_message") String redactedMessage,
+        @JsonProperty("normalized_message") String normalizedMessage,
+        @JsonProperty("slang_normalized") boolean slangNormalized,
+        @JsonProperty("slang_replacements") List<CustomerSlangReplacementView> slangReplacements,
         @JsonProperty("pii_detected") boolean piiDetected,
         @JsonProperty("pii_entities") List<PiiEntityView> piiEntities,
         @JsonProperty("locale") String locale,
@@ -32,4 +35,3 @@ public record CustomerTicketView(
         @JsonProperty("created_at") Instant createdAt,
         @JsonProperty("updated_at") Instant updatedAt
 ) {}
-

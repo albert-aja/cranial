@@ -29,8 +29,8 @@ public class CustomerSentimentEngine {
     );
 
     private static final List<String> NEGATIVE_KEYWORDS_ID = List.of(
-            "kecewa", "ribet", "lemot", "hancur", "rusak", "parah", "membingungkan", "rugi",
-            "ampas", "jelek", "error", "hilang", "emosi", "kesal", "sulit", "payah"
+            "kecewa", "ribet", "lemot", "lambat", "hancur", "rusak", "parah", "membingungkan", "rugi",
+            "ampas", "jelek", "error", "hilang", "emosi", "kesal", "sulit", "payah", "buruk", "gagal"
     );
 
     private static final List<String> URGENT_TRIGGERS = List.of(
@@ -101,8 +101,11 @@ public class CustomerSentimentEngine {
         if (text.contains("scan") || text.contains("receipt") || text.contains("struk") || text.contains("expense") || text.contains("pengeluaran")) {
             aspects.add(new SentimentAspect("EXPENSE_TRACKING", overall, "Receipt OCR and transaction logging"));
         }
-        if (text.contains("freeze") || text.contains("crash") || text.contains("lemot") || text.contains("slow") || text.contains("sync")) {
+        if (text.contains("freeze") || text.contains("crash") || text.contains("force close") || text.contains("lemot") || text.contains("lambat") || text.contains("slow") || text.contains("sync")) {
             aspects.add(new SentimentAspect("PERFORMANCE_SYNC", overall, "Application responsiveness and synchronization"));
+        }
+        if (text.contains("login") || text.contains("password") || text.contains("pin") || text.contains("keamanan")) {
+            aspects.add(new SentimentAspect("ACCOUNT_SECURITY", overall, "Authentication and account access security"));
         }
         if (text.contains("clean") || text.contains("design") || text.contains("interface") || text.contains("dark mode") || text.contains("rapi")) {
             aspects.add(new SentimentAspect("UI_UX", overall, "User interface and visual experience"));

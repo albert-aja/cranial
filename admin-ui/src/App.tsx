@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import { LanguageProvider } from './i18n/LanguageContext';
+import { ToastProvider } from './context/ToastContext';
 import { AppShell, type NavTab } from './components/AppShell';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 import { IntegrationsPage } from './pages/IntegrationsPage';
@@ -11,6 +12,7 @@ import KnowledgePage from './pages/KnowledgePage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import DecisionPage from './pages/DecisionPage';
 import { CustomerPage } from './pages/CustomerPage';
+import { ConversationsPage } from './pages/ConversationsPage';
 import { LoginPage } from './pages/LoginPage';
 import ModelsPage from './pages/ModelsPage';
 import OrchestrationPage from './pages/OrchestrationPage';
@@ -45,6 +47,7 @@ function ConsoleRouter() {
       {activeTab === 'analytics' && <AnalyticsPage />}
       {activeTab === 'decision' && <DecisionPage />}
       {activeTab === 'customer' && <CustomerPage />}
+      {activeTab === 'conversations' && <ConversationsPage />}
       {activeTab === 'tenants' && <TenantsPage />}
       {activeTab === 'feature-flags' && <FeatureFlagsPage />}
       {activeTab === 'audit' && <AuditLogsPage />}
@@ -56,7 +59,9 @@ export default function App() {
   return (
     <AuthProvider>
       <LanguageProvider>
-        <ConsoleRouter />
+        <ToastProvider>
+          <ConsoleRouter />
+        </ToastProvider>
       </LanguageProvider>
     </AuthProvider>
   );

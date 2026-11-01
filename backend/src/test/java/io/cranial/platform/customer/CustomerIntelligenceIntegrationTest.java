@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -286,6 +287,8 @@ class CustomerIntelligenceIntegrationTest {
                 .andExpect(jsonPath("$.data.total_evaluated").isNumber())
                 .andExpect(jsonPath("$.data.sentiment_accuracy_percent").isNumber())
                 .andExpect(jsonPath("$.data.promise_guard_safety_rate_percent").value(100.0))
+                .andExpect(jsonPath("$.data.slang_normalization_accuracy_percent").value(100.0))
+                .andExpect(jsonPath("$.data.slang_cases_evaluated").value(4))
                 .andExpect(jsonPath("$.data.classification_f1_score").isNumber())
                 .andExpect(jsonPath("$.data.evaluation_details").isArray());
     }
@@ -311,6 +314,106 @@ class CustomerIntelligenceIntegrationTest {
         mockMvc.perform(get("/api/v1/customer/tickets/" + ticketId)
                         .header("X-Cranial-Api-Key", otherCred.rawApiKey()))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("9. Indonesian Slang & Colloquial Spelling Normalization Gateway Endpoint (batalin, balikin duit, lemot bgt, gak bisa login)")
+    void testIndonesianSlangNormalizationGateway() throws Exception {
+        String slangChat = "Min tolong batalin pencatatan, balikin duit gw krn aplikasinya lemooottt bgt dan gw gak bisa login! Email rudi@example.com";
+
+        mockMvc.perform(post("/api/v1/customer/slang/normalize")
+                        .header("X-Cranial-Api-Key", entitledCred.rawApiKey())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "text", slangChat,
+                                "locale", "id",
+                                "redact_pii", true
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.slang_detected").value(true))
+                .andExpect(jsonPath("$.data.pii_detected").value(true))
+                .andExpect(jsonPath("$.data.banking_boundary_hint_detected").value(true))
+                .andExpect(jsonPath("$.data.money_management_disclaimer").isNotEmpty())
+                .andExpect(jsonPath("$.data.normalized_text").value(org.hamcrest.Matchers.allOf(
+                        org.hamcrest.Matchers.containsString("batalkan"),
+                        org.hamcrest.Matchers.containsString("kembalikan uang"),
+                        org.hamcrest.Matchers.containsString("lambat sekali"),
+                        org.hamcrest.Matchers.containsString("tidak bisa login")
+                )));
+    }
+
+    @Test
+    @DisplayName("10. End-to-End Colloquial Chat Triage - Slang Refund Trap & Login Troubleshooting")
+    void testColloquialChatTriagePipeline() throws Exception {
+        // A. Slang refund & bank transfer demand -> intercepted by Promise Guard
+        mockMvc.perform(post("/api/v1/customer/tickets/triage")
+                        .header("X-Cranial-Api-Key", entitledCred.rawApiKey())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "customer_name", "Deni Slang",
+                                "subject", "Minta Balikin Duit",
+                                "message", "Woy batalin langganan trs balikin duit gw skrg jg, tf ke rek BCA gw!",
+                                "locale", "id"
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.slang_normalized").value(true))
+                .andExpect(jsonPath("$.data.promise_guard_flagged").value(true))
+                .andExpect(jsonPath("$.data.category").value("PROMISE_POLICY_RESTRICTION"))
+                .andExpect(jsonPath("$.data.routing_queue").value("HUMAN_DISPUTE_DESK"))
+                .andExpect(jsonPath("$.data.escalation_recommended").value(true));
+
+        // B. Slang login failure -> normalized to 'tidak bisa login' and routed to ACCOUNT_AND_SECURITY
+        mockMvc.perform(post("/api/v1/customer/tickets/triage")
+                        .header("X-Cranial-Api-Key", entitledCred.rawApiKey())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "customer_name", "Siti Rahma",
+                                "subject", "Kendala Masuk Akun",
+                                "message", "Min tolongin dong gw gak bisa login dr pagi padahal pw udh bener.",
+                                "locale", "id"
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.slang_normalized").value(true))
+                .andExpect(jsonPath("$.data.category").value("ACCOUNT_AND_SECURITY"))
+                .andExpect(jsonPath("$.data.routing_queue").value("SECURITY_ESCALATION"))
+                .andExpect(jsonPath("$.data.promise_guard_flagged").value(false));
+    }
+
+    @Test
+    @DisplayName("11. Admin Custom Slang Lexicon Governance CRUD & Live Normalization")
+    void testAdminCustomSlangLexiconGovernance() throws Exception {
+        String createResp = mockMvc.perform(post("/api/admin/v1/customer/slang/lexicon")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "slang_term", "kantong bocor",
+                                "canonical_form", "pengeluaran anggaran berlebih",
+                                "category", "FINANCIAL_SLANG",
+                                "locale", "id",
+                                "banking_boundary_hint", false,
+                                "explanation", "Household colloquialism for budget overspending"
+                        ))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.slang_term").value("kantong bocor"))
+                .andExpect(jsonPath("$.data.source").value("CUSTOM_DB"))
+                .andReturn().getResponse().getContentAsString();
+
+        String customId = objectMapper.readTree(createResp).path("data").path("id").asText();
+
+        mockMvc.perform(post("/api/admin/v1/customer/slang/normalize")
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "text", "Bulan ini kantong bocor bgt min",
+                                "locale", "id"
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.normalized_text").value("Bulan ini pengeluaran anggaran berlebih sekali min"));
+
+        mockMvc.perform(delete("/api/admin/v1/customer/slang/lexicon/" + customId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.deleted").value(true));
     }
 }
 

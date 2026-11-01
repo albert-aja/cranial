@@ -10,6 +10,8 @@ import { useAuth } from '../auth/AuthContext';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { RevealOnceModal } from '../components/RevealOnceModal';
 import { StatusBadge } from '../components/StatusBadge';
+import { SignedContextSnippetGenerator } from '../components/SignedContextSnippetGenerator';
+import { ErrorExplanationBanner } from '../components/ErrorExplanationBanner';
 
 export function ApplicationsPage() {
   const { hasPermission } = useAuth();
@@ -140,9 +142,11 @@ export function ApplicationsPage() {
       </div>
 
       {error && (
-        <div role="alert" className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-200">
-          {error}
-        </div>
+        <ErrorExplanationBanner
+          errorCode="APPLICATION_ACTION_FAILED"
+          errorMessage={error}
+          onRetry={loadApps}
+        />
       )}
 
       <div className="flex flex-wrap gap-3">
@@ -423,6 +427,11 @@ export function ApplicationsPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              {/* Signed-Context Test Snippet Generator */}
+              <div className="border-t border-slate-800 pt-4">
+                <SignedContextSnippetGenerator app={selectedApp} credentials={credentials} />
               </div>
             </div>
           )}

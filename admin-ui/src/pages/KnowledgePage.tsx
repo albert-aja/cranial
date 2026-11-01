@@ -18,6 +18,7 @@ import type {
   PromotableDocumentView,
 } from '../api/types';
 import { useLanguage } from '../i18n/LanguageContext';
+import { ErrorExplanationBanner } from '../components/ErrorExplanationBanner';
 
 type SubTab =
   | 'collections'
@@ -670,12 +671,14 @@ export default function KnowledgePage() {
       )}
 
       {error && (
-        <div className="rounded-xl border border-rose-500/40 bg-rose-950/30 px-4 py-3 text-xs text-rose-200 flex justify-between items-center">
-          <span>{error}</span>
-          <button type="button" onClick={() => setError(null)} className="text-rose-400 hover:text-white font-bold ml-4">
-            ✕
-          </button>
-        </div>
+        <ErrorExplanationBanner
+          errorCode="KNOWLEDGE_RAG_ERROR"
+          errorMessage={error}
+          onRetry={() => {
+            setError(null);
+            void loadAll();
+          }}
+        />
       )}
 
       {/* Collection Quick Switcher */}

@@ -21,6 +21,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
                 "io.cranial.platform.analytics.mapper",
                 "io.cranial.platform.decision.mapper",
                 "io.cranial.platform.customer.mapper",
+                "io.cranial.platform.conversation.mapper",
                 "io.cranial.platform.admin"
         },
         annotationClass = org.apache.ibatis.annotations.Mapper.class

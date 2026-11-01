@@ -77,11 +77,16 @@ public class CustomerTriageEngine {
                 lower.contains("pengeluaran") || lower.contains("expense") || lower.contains("catat")) {
             category = TicketCategory.EXPENSE_TRACKING_ISSUE;
         } else if (lower.contains("password") || lower.contains("login") || lower.contains("pin") ||
-                lower.contains("biometric") || lower.contains("keamanan akun")) {
+                lower.contains("biometric") || lower.contains("keamanan akun") || lower.contains("batalkan akun") ||
+                lower.contains("batalkan langganan")) {
             category = TicketCategory.ACCOUNT_AND_SECURITY;
         } else if (lower.contains("saving") || lower.contains("keuangan") || lower.contains("money management") ||
                 lower.contains("investasi") || lower.contains("gaji")) {
             category = TicketCategory.MONEY_MANAGEMENT_INQUIRY;
+        } else if (lower.contains("lambat") || lower.contains("lemot")) {
+            category = TicketCategory.BUG_REPORT;
+        } else if (lower.contains("batalkan")) {
+            category = TicketCategory.EXPENSE_TRACKING_ISSUE;
         } else {
             category = TicketCategory.GENERAL_INQUIRY;
         }
